@@ -4,11 +4,10 @@ import screeninfo
 
 
 class ImageProjector:
-    def __init__(self, display='HDMI-0', marker_size=400, marker_ids=None, camera_index=1):
+    def __init__(self, display='HDMI-0', marker_size=400, marker_ids=None):
         # Initialize the projector with display details, marker size, marker IDs, and camera index
         if marker_ids is None:
             marker_ids = [0, 1, 2, 3]
-        self.camera_index = camera_index
 
         # Monitor configuration
         self.display = display
@@ -31,13 +30,14 @@ class ImageProjector:
         self.create_marker_image()
         self.homography_matrix = None
 
+
     def get_screen_info(self):
         """ Get screen resolution Returns: monitor resolution """
         return self.monitor_resolution
 
-    def show_image(self):
+    def show_image(self, image=np.zeros((600,800), np.uint8)):
         """ Display the marked image on the projector window. """
-        cv2.imshow('Projector', self.marked_image)
+        cv2.imshow('Projector', image)
         cv2.waitKey(1000)  # Show the marker image for 1 second
 
     def find_screen_info(self):
@@ -91,7 +91,6 @@ class ImageProjector:
     def process_frame(self, frame):
         """ Process a frame to detect ArUco markers and correct the perspective. """
         corners, ids = self.detect_aruco_markers(frame)  # Detect markers in the frame
-
         if ids is not None:  # Check if any markers were detected
             # Define known positions for the markers
             marker_positions = np.array([
@@ -130,3 +129,7 @@ class ImageProjector:
         else:
             print("Homography matrix not defined")
             return frame
+
+
+
+

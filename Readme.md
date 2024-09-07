@@ -12,4 +12,5 @@ identify the screen information and print four Aruco patterns to warp perspectiv
   - **Q**: quit program
   - **space**: warp perspective
   - **R**: reset perspective
-  - **I**: start trembling test
+  - **S**: save image
+  - **Enter**: start trembling test
