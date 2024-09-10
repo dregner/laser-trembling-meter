@@ -64,7 +64,7 @@ class ImageProjector:
     def create_marker_image(self):
         """ Create an image with multiple ArUco markers arranged on a canvas. """
         canvas = np.ones((self.monitor_resolution[1], self.monitor_resolution[0]),
-                         dtype=np.uint8) * 255  # Create a white canvas
+                         dtype=np.uint8) * 255  # Create a white image
         markers = [self.generate_aruco_marker(marker_id) for marker_id in self.marker_ids]  # Generate all markers
 
         # Predefined positions to place markers on the canvas
@@ -113,14 +113,13 @@ class ImageProjector:
             # If all markers are detected, compute the homography
             if len(detected_points) == len(self.marker_ids):
                 self.homography_matrix, _ = cv2.findHomography(detected_points, marker_positions)
+                return True
+            else:
+                return False
+        else:
+            return False
 
-                # Correct the perspective using the computed homography matrix
-                corrected_frame = cv2.warpPerspective(frame, self.homography_matrix, (frame.shape[1], frame.shape[0]))
 
-                # Display the corrected image
-                # cv2.namedWindow('Corrected Image', cv2.WINDOW_NORMAL)
-                # cv2.resizeWindow('Corrected Image', 1280, 720)
-                # cv2.imshow('Corrected Image', corrected_frame)
 
     def correct_perspective(self, frame):
         """ Correct frame perspective after homography matrix defined"""
