@@ -27,22 +27,6 @@ def opencv_menu(k):
     return None
 
 
-def create_image_with_text(filename, text_lines, width=800, height=600, font_scale=1, thickness=2):
-    # Create a blank image with white background
-    image = np.ones((height, width, 3), dtype=np.uint8) * 255
-
-    # Define font type and color
-    font = cv2.FONT_HERSHEY_SIMPLEX
-    color = (0, 0, 0)  # Black color
-
-    # Define text position
-    y0, dy = height // 4, 60  # Starting y position and vertical spacing
-
-    # Draw text on the image
-    for i, line in enumerate(text_lines):
-        y = y0 + i * dy
-        cv2.putText(image, line, (width // 4, y), font, font_scale, color, thickness, cv2.LINE_AA)
-    return image
 
 def main(projector_output):
     projector = ImageProjector(display=projector_output, marker_size=400)
@@ -55,14 +39,6 @@ def main(projector_output):
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
 
-    menu_text = [
-        "Welcome to the Game!",
-        "Start - 'enter'",
-        "Perspective - 'space'",
-        "Help - 'h'",
-        "Quit - 'q'"
-    ]
-    menu_image = create_image_with_text("start_menu_cv2.png", menu_text)
     # projector.show_image()
     print('Opened Camera')
     transform_perspective = False
@@ -71,7 +47,7 @@ def main(projector_output):
     cv2.namedWindow('Webcam Feed', cv2.WINDOW_NORMAL)
     cv2.resizeWindow('Webcam Feed', 800, 600)
     counter = 0
-    elapsed_time = 15
+    elapsed_time = 10
     while cap.isOpened():
         counter += 1
         ret, frame = cap.read()
@@ -87,7 +63,7 @@ def main(projector_output):
         cv_menu = opencv_menu(k)
         if start_test:
 
-            if round((time.time() - t0), 2) < 1:
+            if round((time.time() - t0), 2) > 1:
                 if round((time.time() - t0), 2) < elapsed_time:
                     dt = round(30 + (t0 - time.time()), 2)
                     print("\rTime: {} s".format(dt), end="")
@@ -95,6 +71,7 @@ def main(projector_output):
                 else:
                     laser_detected = laser_process.write_detected_laser_pos(frame)
                     projector.show_image(image=laser_detected)
+                    laser_process.reset_laser_pos()
                     start_test = False
 
         if cv_menu == 'save_img':
@@ -134,5 +111,5 @@ def main(projector_output):
 
 
 if __name__ == "__main__":
-    projector_output_source = '\\\\.\\DISPLAY1'
+    projector_output_source = '\\\\.\\DISPLAY4'
     main(projector_output_source)

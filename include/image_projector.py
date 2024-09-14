@@ -30,12 +30,14 @@ class ImageProjector:
         self.create_marker_image()
         self.homography_matrix = None
 
+        # Start menu boxes
+        self.start_boxes = []
 
     def get_screen_info(self):
         """ Get screen resolution Returns: monitor resolution """
         return self.monitor_resolution
 
-    def show_image(self, image=np.zeros((600,800), np.uint8)):
+    def show_image(self, image=np.zeros((600, 800), np.uint8)):
         """ Display the marked image on the projector window. """
         cv2.imshow('Projector', image)
         cv2.waitKey(1000)  # Show the marker image for 1 second
@@ -119,8 +121,6 @@ class ImageProjector:
         else:
             return False
 
-
-
     def correct_perspective(self, frame):
         """ Correct frame perspective after homography matrix defined"""
         if self.homography_matrix is not None:
@@ -129,6 +129,52 @@ class ImageProjector:
             print("Homography matrix not defined")
             return frame
 
+    def menu_image(self):
+        height, width = self.monitor_resolution
+        image = np.ones((height, width, 3), dtype=np.uint8) * 255
 
+        # Define font type and color
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        color = (0, 0, 0)  # Black color
 
+        # Define text position
+        y0, dy = self.monitor_resolution[0] // 4, 60  # Starting y position and vertical spacing
 
+        text_lines = [
+            "Welcome to the Trembling Meter!",
+            "Start",
+            "Help",
+            "Quit"
+        ]
+        # Draw text on the image
+        for i, line in enumerate(text_lines):
+            y = y0 + i * dy
+            cv2.putText(image, line, (width // 4, y), font, fontScale=1, color=(0, 0, 0), thickness=2)
+            if i > 1:
+                cv2.rectangle(image, (width // 4 + 100, y), (width // 4 + 150, y + 50), color=(0, 0, 0), thickness=2)
+                self.start_boxes.append((width // 4 + 125, y + 25))
+        return image
+
+    def help_menu(self):
+        height, width = self.monitor_resolution
+        image = np.ones((height, width, 3), dtype=np.uint8) * 255
+
+        # Define font type and color
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        color = (0, 0, 0)  # Black color
+
+        # Define text position
+        y0, dy = self.monitor_resolution[0] // 4, 60  # Starting y position and vertical spacing
+
+        text_lines = [
+            "Welcome to the Trembling Meter!",
+            "Start",
+            "Help",
+            "Quit"
+        ]
+        # Draw text on the image
+        for i, line in enumerate(text_lines):
+            y = y0 + i * dy
+            cv2.putText(image, line, (width // 4, y), font, fontScale=1, color=(0, 0, 0), thickness=2)
+        cv2.rectangle(image, (width  -200, height - 200), (width - 150, height -150), color=(0, 0, 0), thickness=2)
+        return image
