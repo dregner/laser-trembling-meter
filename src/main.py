@@ -28,7 +28,7 @@ def opencv_menu(k):
 
 
 
-def main(projector_output):
+def main(projector_output, debug=False):
     projector = ImageProjector(display=projector_output, marker_size=400)
 
     width, height = projector.get_screen_info()
@@ -53,11 +53,13 @@ def main(projector_output):
         ret, frame = cap.read()
         if transform_perspective:
             frame = projector.correct_perspective(frame)
+            if menu_screen:
+                laser_process.detect_laser_menu(frame=frame, )
         if not ret:
             break
-
-        cv2.imshow('Webcam Feed', frame)
-        k = cv2.waitKey(1)
+        if debug:
+            cv2.imshow('Webcam Feed', frame)
+            k = cv2.waitKey(1)
 
         # check what key was pressed
         cv_menu = opencv_menu(k)
@@ -85,7 +87,9 @@ def main(projector_output):
             # print('Correct prespective')
             if projector.process_frame(frame):
                 print("Homography matrix found")
-                projector.show_image(image=np.ones_like(frame) * 255)
+                menu_screen = True
+                projector.show_image(image=projector.menu_image(rectangle_size=20))
+                cv2.waitKey(10)
 
         # If menu reset pressed, reset perspective
         if cv_menu == 'reset':

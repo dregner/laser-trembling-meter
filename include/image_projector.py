@@ -129,7 +129,7 @@ class ImageProjector:
             print("Homography matrix not defined")
             return frame
 
-    def menu_image(self):
+    def menu_image(self, rectangle_size):
         height, width = self.monitor_resolution
         image = np.ones((height, width, 3), dtype=np.uint8) * 255
 
@@ -138,8 +138,8 @@ class ImageProjector:
         color = (0, 0, 0)  # Black color
 
         # Define text position
-        y0, dy = self.monitor_resolution[0] // 4, 60  # Starting y position and vertical spacing
-
+        y0, dy = height // 4, 80  # Starting y position and vertical spacing
+        offset_box = 150
         text_lines = [
             "Welcome to the Trembling Meter!",
             "Start",
@@ -148,11 +148,22 @@ class ImageProjector:
         ]
         # Draw text on the image
         for i, line in enumerate(text_lines):
-            y = y0 + i * dy
-            cv2.putText(image, line, (width // 4, y), font, fontScale=1, color=(0, 0, 0), thickness=2)
-            if i > 1:
-                cv2.rectangle(image, (width // 4 + 100, y), (width // 4 + 150, y + 50), color=(0, 0, 0), thickness=2)
-                self.start_boxes.append((width // 4 + 125, y + 25))
+            if i == 0:
+                y = y0 + i * dy
+                cv2.putText(image, line, (width // 10, y), font, fontScale=1.2, color=(0, 127, 255), thickness=2)
+            else:
+                y = y0 + i * dy
+                cv2.putText(image, line, (width // 4, y), font, fontScale=1, color=(0, 0, 0), thickness=2)
+            if i > 0:
+                cv2.rectangle(image, (width // 4 - rectangle_size + offset_box, y - rectangle_size),
+                              (width // 4 + rectangle_size + offset_box, y + rectangle_size), color=(0, 0, 0),
+                              thickness=2)
+                self.start_boxes.append((width // 4 + rectangle_size + offset_box, y + rectangle_size))
+
+        cv2.putText(image, 'Fundamentos da Visao Computacional', (width - width // 2, height - height // 8), font,
+                    fontScale=0.5, color=(0, 0, 0), thickness=2)
+        cv2.putText(image, 'LABMETRO - UFSC', (width - width // 4, height - height // 8 + 20), font, fontScale=0.5,
+                    color=(0, 0, 0), thickness=2)
         return image
 
     def help_menu(self):

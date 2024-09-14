@@ -50,10 +50,12 @@ class ProcessLaser:
     def reset_laser_pos(self):
         self.detected_laser_pos = []
 
-    def detect_laser_menu(self, frame, xy_start=(100,100), xy_help=(100,300), xy_quit=(100,400)):
+    def detect_laser_menu(self, frame, menu_squares_position, rectangle_size=50):
+        xy_start, xy_help, xy_quit = menu_squares_position
         mask = cv2.threshold(cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY), 180, 255, cv2.THRESH_BINARY)[1]
         mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, np.ones((5, 5), np.uint8))
         mask = cv2.dilate(mask, np.ones((5, 5), np.uint8))
+
         contours, h = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         if len(contours) > 0:
             for contour in contours:
@@ -64,9 +66,9 @@ class ProcessLaser:
                 cXid = int(Mid["m10"] / np.maximum(Mid["m00"], 1e-10))
                 cYid = int(Mid["m01"] / np.maximum(Mid["m00"], 1e-10))
 
-                if xy_start <= (cXid, cYid) <= xy_start + 50:
+                if xy_start <= (cXid, cYid) <= xy_start + rectangle_size:
                     return 'start'
-                if xy_help <= (cXid, cYid) <= xy_help + 50:
+                if xy_help <= (cXid, cYid) <= xy_help + rectangle_size:
                     return 'help'
-                if xy_quit <= (cXid, cYid) <= xy_quit + 50:
+                if xy_quit <= (cXid, cYid) <= xy_quit + rectangle_size:
                     return 'quit'
