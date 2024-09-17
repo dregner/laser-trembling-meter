@@ -7,7 +7,12 @@ import numpy as np
 import time
 
 from include.image_projector import ImageProjector
-from include.ProcessLaser import ProcessLaser
+from include.process_laser import ProcessLaser
+from include.camera_control import CameraClass
+def mouse_callback(event, x, y, flags, param):
+    if event == cv2.EVENT_LBUTTONDOWN:
+        print('X: {}, Y: {}'.format(x, y))
+        param.append((x, y))
 
 
 def opencv_menu(k):
@@ -27,44 +32,48 @@ def opencv_menu(k):
     return None
 
 
-
-def main(projector_output, debug=False):
+def main(projector_output, debug=True):
+    frame_counter = 0
+    elapsed_time = 10
+    fps = 0
     projector = ImageProjector(display=projector_output, marker_size=400)
-
     width, height = projector.get_screen_info()
-    projector.show_image(image=projector.marked_image)
+    camera_process = CameraClass(monitor_resoltuion=(width, height), camera_input=0, camera_resolution=(width, height),
+                                 marker_size=400)
 
     laser_process = ProcessLaser(img_resolution=(height, width))
-    cap = cv2.VideoCapture(1)
-    cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
-    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
-
+    click = []
+    cv2.setMouseCallback(projector.window_name, mouse_callback, click)
     # projector.show_image()
     print('Opened Camera')
     transform_perspective = False
     start_test = False
 
+    projector.show_image(image=projector.marked_image)
     cv2.namedWindow('Webcam Feed', cv2.WINDOW_NORMAL)
     cv2.resizeWindow('Webcam Feed', 800, 600)
-    counter = 0
-    elapsed_time = 10
-    while cap.isOpened():
-        counter += 1
-        ret, frame = cap.read()
+    while camera_process.camera.isOpened():
+        ret, frame = camera_process.camera.read()
+        frame_counter += 1
+        # Put the FPS text on the frame
         if transform_perspective:
-            frame = projector.correct_perspective(frame)
-            if menu_screen:
-                laser_process.detect_laser_menu(frame=frame, )
+            frame = camera_process.correct_perspective(frame)
+
+            if menu_screen and len(click) > 0:
+                    laser_menu = laser_process.detect_laser_menu(frame=frame, menu_squares_position=projector.menu_boxes, mouse=click[-1])
+                    if laser_menu == 'Start':
+                        start_test = True
+                    if laser_menu == 'Help':
+                        help_menu, menu_screen = True, False
+                    if laser_menu == 'Quit':
+                        k = ord('q')
         if not ret:
             break
-        if debug:
-            cv2.imshow('Webcam Feed', frame)
-            k = cv2.waitKey(1)
 
         # check what key was pressed
+        k = cv2.waitKey(1)
         cv_menu = opencv_menu(k)
         if start_test:
-
             if round((time.time() - t0), 2) > 1:
                 if round((time.time() - t0), 2) < elapsed_time:
                     dt = round(30 + (t0 - time.time()), 2)
@@ -78,42 +87,45 @@ def main(projector_output, debug=False):
 
         if cv_menu == 'save_img':
             os.makedirs('../images', exist_ok=True)
-            cv2.imwrite('../images/frame{}.jpg'.format(counter), frame)
-            print('saved image: {}'.format(counter))
+            cv2.imwrite('../images/frame{}.jpg'.format(frame_counter), frame)
+            print('saved image: {}'.format(frame_counter))
+
+        if help_menu:
+            projector.show_image(image=projector.help_menu_image())
+            laser_process.detect_laser_help(frame=frame, help_box=projector.help_boxes, mouse=click[-1])
 
         # if 'space' is pressed: wrap perspective
         if cv_menu == 'perspective':
             transform_perspective = True
-            # print('Correct prespective')
-            if projector.process_frame(frame):
-                print("Homography matrix found")
-                menu_screen = True
-                projector.show_image(image=projector.menu_image(rectangle_size=20))
-                cv2.waitKey(10)
+            # if camera_process.process_frame(frame):
+            #     print("Homography matrix found")
+            menu_screen = True
+            projector.show_image(image=projector.menu_image(rectangle_size=20))
+            print(projector.menu_boxes)
+            cv2.waitKey(int(1e3/fps))
 
         # If menu reset pressed, reset perspective
         if cv_menu == 'reset':
             # print('Reseting Perspective')
             projector.show_image(projector.marked_image)
-            transform_perspective = False
-            start_test = False
+            transform_perspective, start_test = False, False
 
-        # If menu laser is pressed
-        if cv_menu == 'laser':
-            print("start laser test")
-            projector.show_image(image=np.zeros_like(frame))
-            start_test = True
-            t0 = time.time()
-        # Started test and process detection
 
+        fps, frame_counter = camera_process.frame_counter(frame_counter=frame_counter, fps=fps)
 
         if k == ord('q'):
             break
 
-    cap.release()
+        if debug:
+            cv2.putText(frame, f"FPS: {int(fps)}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
+            cv2.imshow('Webcam Feed', frame)
+
+    camera_process.release_camera()
     cv2.destroyAllWindows()
 
 
 if __name__ == "__main__":
-    projector_output_source = '\\\\.\\DISPLAY4'
+    global mouseX, mouseY
+
+    projector_output_source = '\\\\.\\DISPLAY1'  # 4' numero do proj sala de aula
     main(projector_output_source)

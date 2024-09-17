@@ -13,16 +13,13 @@ class ImageProjector:
         self.display = display
         self.monitor_position = (0, 0)
         self.monitor_resolution = (1920, 1080)
+        self.window_name = 'Projector'
 
         # ArUco marker settings
         self.marker_size = marker_size
         self.marker_ids = marker_ids
         self.marked_image = np.zeros(self.monitor_resolution, np.uint8)
-
-        # Initialize ArUco dictionary and detector parameters
         self.aruco_dict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50)
-        self.parameters = cv2.aruco.DetectorParameters()
-        self.detector = cv2.aruco.ArucoDetector(dictionary=self.aruco_dict, detectorParams=self.parameters)
 
         # Set up screen info, window, and create marker image
         self.find_screen_info()
@@ -31,7 +28,8 @@ class ImageProjector:
         self.homography_matrix = None
 
         # Start menu boxes
-        self.start_boxes = []
+        self.menu_boxes = []
+        self.help_boxes = []
 
     def get_screen_info(self):
         """ Get screen resolution Returns: monitor resolution """
@@ -39,7 +37,7 @@ class ImageProjector:
 
     def show_image(self, image=np.zeros((600, 800), np.uint8)):
         """ Display the marked image on the projector window. """
-        cv2.imshow('Projector', image)
+        cv2.imshow(self.window_name, image)
         cv2.waitKey(1000)  # Show the marker image for 1 second
 
     def find_screen_info(self):
@@ -51,11 +49,11 @@ class ImageProjector:
             print("Unable to find the screen information.")
             return
 
-    def create_window2projector(self, name='Projector'):
+    def create_window2projector(self):
         """ Create a window for the projector display in fullscreen mode. """
-        cv2.namedWindow(name, cv2.WINDOW_NORMAL)
-        cv2.moveWindow(name, self.monitor_position[0], self.monitor_position[1])
-        cv2.setWindowProperty(name, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+        cv2.namedWindow(self.window_name, cv2.WINDOW_NORMAL)
+        cv2.moveWindow(self.window_name, self.monitor_position[0], self.monitor_position[1])
+        cv2.setWindowProperty(self.window_name, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
 
     def generate_aruco_marker(self, marker_id):
         """ Generate an ArUco marker image for a given marker ID. """
@@ -85,49 +83,7 @@ class ImageProjector:
 
         self.marked_image = canvas  # Update the marked image
 
-    def detect_aruco_markers(self, frame):
-        """ Detect ArUco markers in the given frame and return their corners and IDs. """
-        corners, ids, _ = self.detector.detectMarkers(frame)
-        return corners, ids
 
-    def process_frame(self, frame):
-        """ Process a frame to detect ArUco markers and correct the perspective. """
-        corners, ids = self.detect_aruco_markers(frame)  # Detect markers in the frame
-        if ids is not None:  # Check if any markers were detected
-            # Define known positions for the markers
-            marker_positions = np.array([
-                [50, 50],  # Top-left marker
-                [self.monitor_resolution[0] - self.marker_size - 50, 50],  # Top-right marker
-                [50, self.monitor_resolution[1] - self.marker_size - 50],  # Bottom-left marker
-                [self.monitor_resolution[0] - self.marker_size - 50, self.monitor_resolution[1] - self.marker_size - 50]
-                # Bottom-right marker
-            ], dtype=np.float32)
-
-            # Initialize array to store detected points
-            detected_points = np.zeros((len(self.marker_ids), 2), dtype=np.float32)
-            ids = ids.flatten()  # Flatten the marker IDs array
-
-            # Map detected marker IDs to their corresponding positions
-            for i, marker_id in enumerate(ids):
-                if marker_id in self.marker_ids:
-                    detected_points[marker_id] = corners[i][0][0]  # Store detected corner point
-
-            # If all markers are detected, compute the homography
-            if len(detected_points) == len(self.marker_ids):
-                self.homography_matrix, _ = cv2.findHomography(detected_points, marker_positions)
-                return True
-            else:
-                return False
-        else:
-            return False
-
-    def correct_perspective(self, frame):
-        """ Correct frame perspective after homography matrix defined"""
-        if self.homography_matrix is not None:
-            return cv2.warpPerspective(frame, self.homography_matrix, (frame.shape[1], frame.shape[0]))
-        else:
-            print("Homography matrix not defined")
-            return frame
 
     def menu_image(self, rectangle_size):
         height, width = self.monitor_resolution
@@ -158,7 +114,7 @@ class ImageProjector:
                 cv2.rectangle(image, (width // 4 - rectangle_size + offset_box, y - rectangle_size),
                               (width // 4 + rectangle_size + offset_box, y + rectangle_size), color=(0, 0, 0),
                               thickness=2)
-                self.start_boxes.append((width // 4 + rectangle_size + offset_box, y + rectangle_size))
+                self.menu_boxes.append((width // 4 + rectangle_size + offset_box, y + rectangle_size))
 
         cv2.putText(image, 'Fundamentos da Visao Computacional', (width - width // 2, height - height // 8), font,
                     fontScale=0.5, color=(0, 0, 0), thickness=2)
@@ -166,7 +122,7 @@ class ImageProjector:
                     color=(0, 0, 0), thickness=2)
         return image
 
-    def help_menu(self):
+    def help_menu_image(self):
         height, width = self.monitor_resolution
         image = np.ones((height, width, 3), dtype=np.uint8) * 255
 
