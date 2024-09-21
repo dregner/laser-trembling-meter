@@ -9,20 +9,31 @@ class ProcessLaser:
         self.img_resolution = img_resolution
         self.detected_laser_pos = []
 
-    def mask2detect(self, frame):
-        mask = cv2.threshold(cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY), 180, 255, cv2.THRESH_BINARY)[1]
-        mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, np.ones((5, 5), np.uint8))
-        mask = cv2.dilate(mask, np.ones((5, 5), np.uint8))
+    def mask2detect(self, frame, debug=False):
+        hsv_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)  # Convert to HSV
+        lower_red = np.array([0, 120, 70])  # Lower bound for the laser color (adjust as needed)
+        upper_red = np.array([10, 255, 255])  # Upper bound for the laser color
+
+        mask = cv2.inRange(hsv_frame, lower_red, upper_red)  # Create a mask for laser color
+        mask = cv2.threshold(mask, 0, 255, cv2.THRESH_BINARY)[1]
+        mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, np.ones((5, 5), np.uint8))  # Remove noise
+        mask = cv2.dilate(mask, np.ones((5, 5), np.uint8))  # Expand the laser area
+        if debug:
+            cv2.imshow('debug mask', mask)
+            cv2.waitKey(1)
+
         return mask
 
     def detect_laser(self, frame, debug=False, dt=1):
 
-        mask = self.mask2detect(frame)
         cnt = None
-        contours, h = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        contours, _ = cv2.findContours(frame, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
         # cv2.drawContours(colored, contours, -1, (255, 0, 0), 3)
         if len(contours) > 0:
+
+            contours = [cnt for cnt in contours if cv2.contourArea(cnt) > 30]  # Filter small contours
+
             for contour in contours:
                 # Compute moments
                 Mid = cv2.moments(contour)
@@ -31,9 +42,9 @@ class ProcessLaser:
                 cXid = int(Mid["m10"] / np.maximum(Mid["m00"], 1e-10))
                 cYid = int(Mid["m01"] / np.maximum(Mid["m00"], 1e-10))
                 print(cYid, cXid)
-                if cYid > 100 and cXid > 100:
+                if cYid > 5 and cXid > 5:
                     cnt = (cXid, cYid)
-                    self.detected_laser_pos.append((cXid, cYid))
+                    return cXid, cYid
 
         if debug and len(contours) > 0:
             debug_img = np.ones_like(frame) * 255
@@ -44,6 +55,8 @@ class ProcessLaser:
             cv2.imshow('debug detection', debug_img)
             if dt < 0.5:
                 cv2.destroyWindow('debug detection')
+        return 0, 0
+
 
     def write_detected_laser_pos(self, frame):
         image_out = np.zeros_like(frame)
@@ -54,28 +67,61 @@ class ProcessLaser:
     def reset_laser_pos(self):
         self.detected_laser_pos = []
 
-    def detect_laser_menu(self, frame, menu_squares_position, rectangle_size=50, mouse=None):
+    def detect_laser_menu(self, frame, menu_squares_position, click=(0, 0), debug=False):
 
-        xy_start, xy_help, xy_quit = menu_squares_position
-        cXid, cYid = 0, 0
-
-        if mouse is None:
-            mask = self.mask2detect(frame)
-            contours, h = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-            if len(contours) > 0:
-                for contour in contours:
-                    # Compute moments
-                    Mid = cv2.moments(contour)
-
-                    # Calculate the centroid
-                    cXid = int(Mid["m10"] / np.maximum(Mid["m00"], 1e-10))
-                    cYid = int(Mid["m01"] / np.maximum(Mid["m00"], 1e-10))
+        if click == (0, 0):
+            mask = self.mask2detect(frame, debug=False)
+            cXid, cYid = self.detect_laser(mask, debug=False)
         else:
-            cXid, cYid = mouse
+            cXid, cYid = click
+        if menu_squares_position[0][0][0] <= cXid <= menu_squares_position[0][1][0] \
+                and menu_squares_position[0][0][1] <= cYid <= menu_squares_position[0][1][1]:
+            print('Menu start')
+            return 'start'
+        if menu_squares_position[1][0][0] <= cXid <= menu_squares_position[1][1][0] \
+                and menu_squares_position[1][0][1] <= cYid <= menu_squares_position[1][1][1]:
+            print('Menu help')
+            return 'help'
+        if menu_squares_position[2][0][0] <= cXid <= menu_squares_position[2][1][0] \
+                and menu_squares_position[2][0][1] <= cYid <= menu_squares_position[2][1][1]:
+            print('Menu quit')
+            return 'quit'
+        if debug:
+            cv2.namedWindow('debug laser menu', cv2.WINDOW_NORMAL)
+            cv2.resizeWindow('debug laser menu', 800, 600)
+            cv2.circle(frame, (cXid, cYid), 5, (0, 255, 0), 2)
+            cv2.imshow('debug laser menu', frame)
+            print(cXid, cYid)
+            cv2.waitKey(1)
 
-        if  xy_start[0] - rectangle_size <= cXid <= xy_start[0] and xy_start[1] - rectangle_size <= cYid <= xy_start[1]:
-            print( 'start')
-        if xy_help[0] - rectangle_size <= cXid <= xy_help[0] and xy_help[1] - rectangle_size <= cYid <= xy_help[1]:
-            print('help')
-        if xy_quit[0] - rectangle_size <= cXid <= xy_quit[0] and xy_quit[1] - rectangle_size <= cYid <= xy_quit[1]:
-            print('quit')
+    def detect_laser_start(self, frame, test_number, laser_boxes, click=(0, 0), rect_size=50):
+        if click == (0, 0):
+            mask = self.mask2detect(frame, debug=False)
+            cXid, cYid = self.detect_laser(mask, debug=False)
+        else:
+            cXid, cYid = click
+        if test_number == 1:
+            if laser_boxes[0][0][0] <= cXid <= laser_boxes[0][1][0] \
+                    and laser_boxes[0][0][1] - rect_size <= cYid <= laser_boxes[0][1][1]:
+                print('Laser start')
+                return True
+
+        if test_number == 2:
+            if laser_boxes[1][0][0] <= cXid <= laser_boxes[1][1][0] \
+                    and laser_boxes[1][0][1] <= cYid <= laser_boxes[1][1][1]:
+                print('Laser start')
+                return True
+
+        return False
+
+    def detect_laser_help(self, frame, help_box, click=(0, 0)):
+        if click == (0, 0):
+            mask = self.mask2detect(frame, debug=False)
+            cXid, cYid = self.detect_laser(mask, debug=False)
+        else:
+            cXid, cYid = click
+        if help_box[0][0] <= cXid <= help_box[1][0] \
+                and help_box[0][1] <= cYid <= help_box[1][1]:
+            print('Help quit')
+            return True
+        return False
