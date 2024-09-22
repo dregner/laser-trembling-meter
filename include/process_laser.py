@@ -2,12 +2,14 @@ from colorsys import yiq_to_rgb
 
 import cv2
 import numpy as np
+from matplotlib.testing.widgets import click_and_drag
 
 
 class ProcessLaser:
     def __init__(self, img_resolution):
         self.img_resolution = img_resolution
-        self.detected_laser_pos = []
+        self.test_1_points = []
+        self.test_2_points = []
 
     def mask2detect(self, frame, debug=False):
         hsv_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)  # Convert to HSV
@@ -57,15 +59,18 @@ class ProcessLaser:
                 cv2.destroyWindow('debug detection')
         return 0, 0
 
-
-    def write_detected_laser_pos(self, frame):
-        image_out = np.zeros_like(frame)
-        for k in range(len(self.detected_laser_pos)):
-            cv2.circle(image_out, self.detected_laser_pos[k], 2, (0, 0, 255), 2)
-        return image_out
-
     def reset_laser_pos(self):
-        self.detected_laser_pos = []
+        self.test_1_points = []
+
+    def write_detected_laser_pos(self, frame, test_number):
+        image_out = np.zeros_like(frame)
+        if test_number == 1:
+            for k in range(len(self.test_1_points)):
+                cv2.circle(image_out, self.test_1_points[k], 2, (0, 0, 255), 2)
+        if test_number == 2:
+            for k in range(len(self.test_2_points)):
+                cv2.circle(image_out, self.test_2_points[k], 2, (0, 0, 255), 2)
+        return image_out
 
     def detect_laser_menu(self, frame, menu_squares_position, click=(0, 0), debug=False):
 
@@ -94,26 +99,6 @@ class ProcessLaser:
             print(cXid, cYid)
             cv2.waitKey(1)
 
-    def detect_laser_start(self, frame, test_number, laser_boxes, click=(0, 0), rect_size=50):
-        if click == (0, 0):
-            mask = self.mask2detect(frame, debug=False)
-            cXid, cYid = self.detect_laser(mask, debug=False)
-        else:
-            cXid, cYid = click
-        if test_number == 1:
-            if laser_boxes[0][0][0] <= cXid <= laser_boxes[0][1][0] \
-                    and laser_boxes[0][0][1] - rect_size <= cYid <= laser_boxes[0][1][1]:
-                print('Laser start')
-                return True
-
-        if test_number == 2:
-            if laser_boxes[1][0][0] <= cXid <= laser_boxes[1][1][0] \
-                    and laser_boxes[1][0][1] <= cYid <= laser_boxes[1][1][1]:
-                print('Laser start')
-                return True
-
-        return False
-
     def detect_laser_help(self, frame, help_box, click=(0, 0)):
         if click == (0, 0):
             mask = self.mask2detect(frame, debug=False)
@@ -125,3 +110,70 @@ class ProcessLaser:
             print('Help quit')
             return True
         return False
+
+    def detect_test_start(self, frame, test_number, laser_boxes, click=(0, 0)):
+        if click == (0, 0):
+            mask = self.mask2detect(frame, debug=False)
+            cXid, cYid = self.detect_laser(mask, debug=False)
+        else:
+            cXid, cYid = click
+        if test_number == 1:
+            if laser_boxes[0][0][0] <= cXid <= laser_boxes[0][1][0] \
+                    and laser_boxes[0][0][1] <= cYid <= laser_boxes[0][1][1]:
+                # print('Laser start')
+                return True
+
+        if test_number == 2:
+            if laser_boxes[2][0][0] <= cXid <= laser_boxes[2][1][0] \
+                    and laser_boxes[2][0][1] <= cYid <= laser_boxes[2][1][1]:
+                # print('Laser start')
+                return True
+
+        return False
+
+    def detect_test_end(self, frame, test_number, laser_boxes, click=(0, 0)):
+        if click == (0, 0):
+            mask = self.mask2detect(frame, debug=False)
+            cXid, cYid = self.detect_laser(mask, debug=False)
+        else:
+            cXid, cYid = click
+        if test_number == 1:
+            if laser_boxes[1][0][0] <= cXid <= laser_boxes[1][1][0] \
+                    and laser_boxes[1][0][1] <= cYid <= laser_boxes[1][1][1]:
+                print('Laser End')
+                return True
+
+        if test_number == 2:
+            if laser_boxes[3][0][0] <= cXid <= laser_boxes[3][1][0] \
+                    and laser_boxes[3][0][1] <= cYid <= laser_boxes[3][1][1]:
+                print('Laser End')
+                return True
+
+        return False
+
+    def detect_results_img(self, frame, boxes, click=(0, 0)):
+        if click == (0, 0):
+            mask = self.mask2detect(frame, debug=False)
+            cXid, cYid = self.detect_laser(mask, debug=False)
+        else:
+            cXid, cYid = click
+
+        if boxes[0][0] <= cXid <= boxes[1][0] \
+                and boxes[0][1] <= cYid <= boxes[1][1]:
+            print('Laser End')
+            return True
+
+        return False
+
+    def detect_laser_on_test(self, test_number, click=(0, 0), ):
+        # Check if user is using mouse or laser
+        if click == (0, 0):
+            mask = self.mask2detect(test_number, debug=False)
+            cXid, cYid = self.detect_laser(mask, debug=False)
+        else:
+            cXid, cYid = click
+        # check the test_number
+        if test_number == 1:
+            self.test_1_points.append((cXid, cYid))
+        if test_number == 2:
+            self.test_2_points.append((cXid, cYid))

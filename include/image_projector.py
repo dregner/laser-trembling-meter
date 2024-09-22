@@ -1,6 +1,9 @@
 import cv2
 import numpy as np
 import screeninfo
+import time
+import matplotlib.pyplot as plt
+from io import BytesIO
 
 
 class ImageProjector:
@@ -27,14 +30,12 @@ class ImageProjector:
         self.create_marker_image()
         self.homography_matrix = None
 
-        # Start menu boxes
-        self.line_test = []
-
         # images
-        self.menu_img , self.menu_boxes = self.create_menu_img(rectangle_size=50)
-        self.h_test_img, self.v_test_img, self.test_boxes, self.line_test = self.create_test_img()
+        self.menu_img, self.menu_boxes = self.create_menu_img(rectangle_size=50)
+        self.h_test_img, self.v_test_img, self.test_boxes, self.test_lines = self.create_test_img()
         self.help_img, self.help_boxes = self.create_help_img()
-        print('Projector Initiate')
+        # print('Projector Initiate')
+        self.result_box = []
 
     def get_screen_info(self):
         """ Get screen resolution Returns: monitor resolution """
@@ -59,7 +60,7 @@ class ImageProjector:
         cv2.moveWindow(self.window_name, self.monitor_position[0], self.monitor_position[1])
         cv2.setWindowProperty(self.window_name, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
         preview = np.ones((self.monitor_resolution[1], self.monitor_resolution[0], 3), np.uint8) * 255
-        cv2.putText(preview, 'WAITING FOR CAMERA START',
+        cv2.putText(preview, 'WAITING FOR CAMERA . . .',
                     (self.monitor_resolution[1] // 4, self.monitor_resolution[0] // 2), cv2.FONT_HERSHEY_SIMPLEX,
                     fontScale=1.2, color=(0, 127, 255), thickness=2)
         cv2.imshow(self.window_name, preview)
@@ -90,6 +91,12 @@ class ImageProjector:
             x, y = pos
             canvas[y:y + self.marker_size, x:x + self.marker_size] = marker
 
+        cv2.putText(canvas, '\'space\' to correct perspective', (self.monitor_resolution[0] // 3,
+                    self.monitor_resolution[1] // 3), cv2.FONT_HERSHEY_SIMPLEX,
+                    fontScale=1.0, color=(0, 127, 255), thickness=2)
+        cv2.putText(canvas, '\'r\' to reset until it works', (self.monitor_resolution[0] // 3,
+                    self.monitor_resolution[1] // 3+100), cv2.FONT_HERSHEY_SIMPLEX,
+                    fontScale=1.0, color=(0, 127, 255), thickness=2)
         self.marked_image = canvas  # Update the marked image
 
     def create_menu_img(self, rectangle_size):
@@ -117,11 +124,11 @@ class ImageProjector:
                 y = y0 + i * dy
                 cv2.putText(image, line, (width // 4, y), font, fontScale=1, color=(0, 0, 0), thickness=2)
             if i > 0:
-                cv2.rectangle(image, (width // 4 - rectangle_size//2 + offset_box, y - rectangle_size//2),
-                              (width // 4 + rectangle_size//2 + offset_box, y + rectangle_size//2), color=(0, 0, 0),
+                cv2.rectangle(image, (width // 4 - rectangle_size // 2 + offset_box, y - rectangle_size // 2),
+                              (width // 4 + rectangle_size // 2 + offset_box, y + rectangle_size // 2), color=(0, 0, 0),
                               thickness=2)
-                menu_boxes.append([(width // 4 - rectangle_size//2 + offset_box, y - rectangle_size//2),
-                              (width // 4 + rectangle_size//2 + offset_box, y + rectangle_size//2)])
+                menu_boxes.append([(width // 4 - rectangle_size // 2 + offset_box, y - rectangle_size // 2),
+                                   (width // 4 + rectangle_size // 2 + offset_box, y + rectangle_size // 2)])
 
         cv2.putText(image, 'Fundamentos da Visao Computacional', (width - width // 2, height - height // 8), font,
                     fontScale=0.5, color=(0, 0, 0), thickness=2)
@@ -151,34 +158,115 @@ class ImageProjector:
             y = y0 + i * dy
             cv2.putText(image, line, (width // 4, y), font, fontScale=1, color=(0, 0, 0), thickness=2)
         cv2.rectangle(image, (width - 200, height - 200), (width - 150, height - 150), color=(0, 0, 0), thickness=2)
-        boxes=[(width - 200, height - 200), (width - 150, height - 150)]
+        boxes = [(width - 200, height - 200), (width - 150, height - 150)]
 
         return image, boxes
 
     def create_test_img(self):
         # top-left and bottom-right points for horizontal boxesl
         h_boxes = [[(150, self.monitor_resolution[1] // 2 - 50), (250, self.monitor_resolution[1] // 2 + 50)],
-        [(self.monitor_resolution[0] - 150, self.monitor_resolution[1] // 2 - 50),
-         (self.monitor_resolution[0] - 250, self.monitor_resolution[1] // 2 + 50)]]
+                   [(self.monitor_resolution[0] - 250, self.monitor_resolution[1] // 2 - 50),
+                    (self.monitor_resolution[0] - 150, self.monitor_resolution[1] // 2 + 50)]]
 
         # top-left and bottom-right points for vertical boxes
-        v_boxes = [[(self.monitor_resolution[0]//2-50, 50), (self.monitor_resolution[0] // 2 + 50,150)],
-                   [(self.monitor_resolution[0]//2-50, self.monitor_resolution[1]-150),
-                    (self.monitor_resolution[0]//2+50, self.monitor_resolution[1]-50)]]
+        v_boxes = [[(self.monitor_resolution[0] // 2 - 50, 50), (self.monitor_resolution[0] // 2 + 50, 150)],
+                   [(self.monitor_resolution[0] // 2 - 50, self.monitor_resolution[1] - 150),
+                    (self.monitor_resolution[0] // 2 + 50, self.monitor_resolution[1] - 50)]]
 
         h_img = np.ones((self.monitor_resolution[1], self.monitor_resolution[0], 3), dtype=np.uint8) * 255
         cv2.rectangle(h_img, h_boxes[0][0], h_boxes[0][1], color=(0, 0, 0), thickness=2)
         cv2.rectangle(h_img, h_boxes[1][0], h_boxes[1][1], color=(0, 0, 0), thickness=2)
-        cv2.line(h_img, (h_boxes[0][1][0],h_boxes[0][1][1]-50)
-                         , (h_boxes[1][1][0],h_boxes[1][1][1]-50), color=(255, 0, 0), thickness=4)
-        lines_h = [(h_boxes[0][1][0],h_boxes[0][1][1]-50),(h_boxes[1][1][0],h_boxes[1][1][1]-50)]
+        cv2.line(h_img, (h_boxes[0][1][0], h_boxes[0][1][1] - 50)
+                 , (h_boxes[1][0][0], h_boxes[1][1][1] - 50), color=(255, 0, 0), thickness=4)
+        lines_h = [(h_boxes[0][1][0], h_boxes[0][1][1] - 50), (h_boxes[1][1][0], h_boxes[1][1][1] - 50)]
 
         v_img = np.ones_like(h_img, dtype=np.uint8) * 255
         cv2.rectangle(v_img, v_boxes[0][0], v_boxes[0][1], color=(0, 0, 0), thickness=2)
         cv2.rectangle(v_img, v_boxes[1][0], v_boxes[1][1], color=(0, 0, 0), thickness=2)
-        cv2.line(v_img, (v_boxes[0][0][0]+50, v_boxes[0][1][1])
-                 , (v_boxes[1][0][0]+50, v_boxes[1][0][1]), color=(255, 0, 0), thickness=4)
-        lines_v =[(v_boxes[0][0][0]+50, v_boxes[0][1][1]), (v_boxes[1][0][0]+50, v_boxes[1][0][1])]
+        cv2.line(v_img, (v_boxes[0][0][0] + 50, v_boxes[0][1][1])
+                 , (v_boxes[1][0][0] + 50, v_boxes[1][0][1]), color=(255, 0, 0), thickness=4)
+        lines_v = [(v_boxes[0][0][0] + 50, v_boxes[0][1][1]), (v_boxes[1][0][0] + 50, v_boxes[1][0][1])]
 
         return h_img, v_img, np.concatenate((h_boxes, v_boxes)), np.concatenate((lines_h, lines_v))
 
+    def update_circle_position(self, test_number, start_time, elapsed_time):
+        """Calculates and displays the moving circle."""
+        t_percentage = (time.time() - start_time - 3) / elapsed_time
+        if test_number == 1:
+            frame_with_circle = self.h_test_img.copy()
+            line_points = self.test_lines[:2]
+        elif test_number == 2:
+            frame_with_circle = self.v_test_img.copy()
+            line_points = self.test_lines[2:]
+
+        start_point = line_points[0]
+        end_point = line_points[1]
+
+        current_pos = (
+            int(start_point[0] + t_percentage * (end_point[0] - start_point[0])),
+            int(start_point[1] + t_percentage * (end_point[1] - start_point[1]))
+        )
+        if current_pos[0] == end_point[0] and current_pos[1] == end_point[1]:
+            return frame_with_circle
+        else:
+            cv2.circle(frame_with_circle, current_pos, radius=30, color=(0, 0, 0), thickness=-1)
+            return frame_with_circle
+
+    def result_image(self, result_h, result_v, dpi=100):
+        # Calculate the figure size in inches from the projector resolution and DPI
+        width_in_inches = self.monitor_resolution[0] / dpi
+        height_in_inches = self.monitor_resolution[1] / dpi
+
+        # Create a 2x2 grid of plots with extra space for additional info (use gridspec for layout adjustment)
+        fig, axs = plt.subplots(2, 2, figsize=(width_in_inches, height_in_inches), dpi=dpi)
+
+        # Set a title for the figure
+        fig.suptitle('2x2 Plots with Extra Information', fontsize=16)
+
+        # First plot: Sine wave
+        t = np.linspace(0, 2 * np.pi, 100)
+        axs[0, 0].plot(t, np.sin(t), 'r')
+        axs[0, 0].set_title('Sine Wave')
+
+        # Second plot: Cosine wave
+        axs[0, 1].plot(t, np.cos(t), 'b')
+        axs[0, 1].set_title('Cosine Wave')
+
+        # Third plot: Tangent wave
+        axs[1, 0].plot(t, np.tan(t), 'g')
+        axs[1, 0].set_ylim([-10, 10])  # Limit y axis for tan
+        axs[1, 0].set_title('Tangent Wave')
+
+        # Fourth plot: Exponential decay
+        axs[1, 1].plot(t, np.exp(-t), 'm')
+        axs[1, 1].set_title('Exponential Decay')
+
+        # Add extra info (annotations, text, etc.) next to the plots
+        plt.figtext(0.7, 0.85, "Extra Information:", fontsize=12, ha='left', va='center', color='black')
+        plt.figtext(0.7, 0.80, "- Sine wave in red", fontsize=10, ha='left', va='center', color='red')
+        plt.figtext(0.7, 0.75, "- Cosine wave in blue", fontsize=10, ha='left', va='center', color='blue')
+        plt.figtext(0.7, 0.70, "- Tangent wave in green", fontsize=10, ha='left', va='center', color='green')
+        plt.figtext(0.7, 0.65, "- Exponential decay in magenta", fontsize=10, ha='left', va='center', color='magenta')
+
+        # Adjust layout to make room for the text
+        plt.tight_layout(rect=[0, 0, 0.7, 1])  # Leave space on the right for the extra info
+
+        # cv2.putText(image,'Trembling Result', (self.monitor_resolution[0] // 2,100),
+        #             cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=(0, 0, 0), thickness=2)
+        # Convert the figure to a NumPy array (instead of saving to a file)
+        buf = BytesIO()
+        plt.savefig(buf, format='png')
+        buf.seek(0)
+
+        # Convert the buffer to a NumPy array and then to an OpenCV image (Mat)
+        img_arr = np.frombuffer(buf.getvalue(), dtype=np.uint8)
+        image = cv2.imdecode(img_arr, 1)  # Convert the PNG buffer into an OpenCV image
+        cv2.putText(image, 'Return to menu', (self.monitor_resolution[0]-150, self.monitor_resolution[1]-250),
+                    cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=(0, 0, 0), thickness=2)
+        cv2.rectangle(image, (self.monitor_resolution[0] - 150, self.monitor_resolution[1] - 200),
+                      (self.monitor_resolution[0] - 50, self.monitor_resolution[1] - 100), color=(0, 0, 0), thickness=2)
+
+        self.result_box = [(self.monitor_resolution[0] - 150, self.monitor_resolution[1] - 200),
+                           (self.monitor_resolution[0] - 50, self.monitor_resolution[1] - 100)]
+
+        return image
