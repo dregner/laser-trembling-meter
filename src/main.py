@@ -67,11 +67,13 @@ def main(projector_output, debug=True):
         k = cv2.waitKey(1)
         cv_menu = opencv_menu(k)
 
-        # Handle perspective correction
         if cv_menu == 'perspective':
             transform_perspective = True
+            # if camera_process.process_frame(frame):
             menu_screen = True
             projector.show_image(image=projector.menu_img)
+            print('Menu bbx: ', projector.menu_boxes)
+            cv2.waitKey(int(1e3 / fps))
 
         if menu_screen:
             laser_menu = laser_process.detect_laser_menu(frame, projector.menu_boxes, click=click[-1], debug=False)
