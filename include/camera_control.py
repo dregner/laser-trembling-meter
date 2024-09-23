@@ -25,7 +25,6 @@ class CameraClass:
         self.parameters = cv2.aruco.DetectorParameters()
         self.detector = cv2.aruco.ArucoDetector(dictionary=self.aruco_dict, detectorParams=self.parameters)
 
-
     def release_camera(self):
         self.camera.release()
 
