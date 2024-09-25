@@ -190,7 +190,7 @@ class ImageProjector:
 
         return h_img, v_img, np.concatenate((h_boxes, v_boxes)), np.concatenate((lines_h, lines_v))
 
-    def update_circle_position(self, test_number, start_time, elapsed_time):
+    def update_circle_position(self, test_number, start_time, elapsed_time, laser_pos):
         """Calculates and displays the moving circle."""
         t_percentage = (time.time() - start_time - 3) / elapsed_time
         if test_number == 1:
@@ -207,11 +207,26 @@ class ImageProjector:
             int(start_point[0] + t_percentage * (end_point[0] - start_point[0])),
             int(start_point[1] + t_percentage * (end_point[1] - start_point[1]))
         )
-        if current_pos[0] > end_point[0] and current_pos[1] > end_point[1]:
-            return frame_with_circle
+        image = cv2.circle(frame_with_circle, current_pos, radius=10, color=(255, 255, 0), thickness=-1)
+        if laser_pos is not None:
+            output_img = self.update_tracked_laser(image, laser_pos)
         else:
-            cv2.circle(frame_with_circle, current_pos, radius=10, color=(255, 255, 0), thickness=-1)
-            return frame_with_circle
+            output_img = image
+        if current_pos[0] >= end_point[0] and current_pos[1] >= end_point[1]:
+            return output_img
+        else:
+            pass
+            return output_img
+
+    def update_tracked_laser(self, image, laser_pos):
+        if len(laser_pos) > 0:
+            # Ensure laser_pos is a NumPy array of integers and has the correct shape
+            laser_pos = np.array(laser_pos, dtype=np.int32).reshape((-1, 1, 2))
+
+            # Draw the polyline on the image
+            return cv2.polylines(image, [laser_pos], False, (0, 255, 0), thickness=1)
+        else:
+            return image
 
     def result_image(self, result_h, result_v, dpi=100):
         # Calculate the figure size in inches from the projector resolution and DPI
@@ -271,3 +286,4 @@ class ImageProjector:
         #                    (self.monitor_resolution[0] - 50, self.monitor_resolution[1] - 50)]
 
         return image
+

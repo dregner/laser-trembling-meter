@@ -6,14 +6,6 @@ from include.image_projector import ImageProjector
 from include.process_laser import ProcessLaser
 from include.camera_control import CameraClass
 
-
-def mouse_callback(event, x, y, flags, param):
-    # if event == cv2.EVENT_MOUSEMOVE:
-        # param.append((x, y))
-    if event == cv2.EVENT_LBUTTONDOWN:
-        print(f'X: {x}, Y: {y}')
-
-
 def opencv_menu(k):
     if k == 32:  # Space key
         print('Correcting perspective')
@@ -43,13 +35,12 @@ def main(projector_output, debug=True):
     width, height = projector.get_screen_info()
     camera_process = CameraClass(
         monitor_resoltuion=(width, height),
-        camera_input=1,
+        camera_input=0,
         camera_resolution=(width, height),
         marker_size=200
     )
     laser_process = ProcessLaser(img_resolution=(height, width))
 
-    cv2.setMouseCallback(projector.window_name, mouse_callback, click)
     projector.show_image(image=projector.marked_image)
 
     print('Opened Camera')
@@ -66,17 +57,15 @@ def main(projector_output, debug=True):
 
     while camera_process.camera.isOpened():
         ret, frame = camera_process.camera.read()
+        k = cv2.waitKey(1)
         if not ret:
             break
         frame_counter += 1
         if transform_perspective:
             frame = camera_process.correct_perspective(frame=frame)
-            click.append(laser_process.detect_laser(frame=frame,debug=True))
-            # if result_test and test_number > 2:
-            #     result = frame[projector.result_box[1][0]:projector.result_box[1][1],
-            #     projector.result_box[0][0]:projector.result_box[0][1]]
-            #     click.append(laser_process.detect_laser(frame=result,debug=True))
-        k = cv2.waitKey(1)
+            point =laser_process.detect_laser(frame=frame, debug=True)
+            if point is not None:
+                click.append(point)
         cv_menu = opencv_menu(k)
 
         if cv_menu == 'perspective':
@@ -85,7 +74,7 @@ def main(projector_output, debug=True):
                 menu_screen = True
                 projector.show_image(image=projector.menu_img)
                 print('Menu bbx: ', projector.menu_boxes)
-                cv2.waitKey(int(1e3 / fps))
+                cv2.waitKey(int(2e3 / fps))
 
         if menu_screen:
             laser_menu = laser_process.detect_laser_menu(frame, projector.menu_boxes, click=click[-1], debug=False)
@@ -109,12 +98,21 @@ def main(projector_output, debug=True):
                     test_started = True
 
                     # Check for the end condition of the test
-                    if not laser_process.detect_test_end(frame, test_number=test_number, laser_boxes=projector.test_boxes,
+                    if not laser_process.detect_test_end(frame, test_number=test_number,
+                                                         laser_boxes=projector.test_boxes,
                                                          click=click[-1]):
-                        # Update the circle position during the test
-                        frame_with_circle = projector.update_circle_position(test_number=test_number,
-                                                                             start_time=t0, elapsed_time=elapsed_time)
                         laser_process.detect_laser_on_test(test_number=test_number, click=click[-1])
+
+                        # Update the circle position during the test
+                        if test_number == 1:
+                            laser_detected = laser_prqocess.test_1_points
+                        elif test_number == 2:
+                            laser_detected = laser_process.test_2_points
+                        else:
+                            laser_detected = None
+
+                        frame_with_circle = projector.update_circle_position(test_number=test_number, start_time=t0,
+                                                                             elapsed_time=elapsed_time, laser_pos=laser_detected)
                         projector.show_image(frame_with_circle)
                     else:
                         # Test is done, save results and transition
@@ -166,7 +164,6 @@ def main(projector_output, debug=True):
             break
         fps, frame_counter = camera_process.frame_counter(frame_counter, fps)
 
-
         if debug:
             cv2.putText(frame, f"FPS: {int(fps)}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
             cv2.imshow('Webcam Feed', frame)
@@ -176,5 +173,6 @@ def main(projector_output, debug=True):
 
 
 if __name__ == "__main__":
-    projector_output_source = '\\\\.\\DISPLAY4' # Number 4 is from projector at class room
+    # projector_output_source = '\\\\.\\DISPLAY4' # Number 4 is from projector at class room
+    projector_output_source = 'DP-3'  # Number 4 is from projector at class room
     main(projector_output_source)

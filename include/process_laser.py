@@ -1,8 +1,6 @@
-from colorsys import yiq_to_rgb
 
 import cv2
 import numpy as np
-from matplotlib.testing.widgets import click_and_drag
 
 
 class ProcessLaser:
@@ -12,11 +10,14 @@ class ProcessLaser:
         self.test_2_points = []
 
     def mask2detect(self, frame, debug=False):
-        # lower_red = np.array([0,0, 250])  # Lower bound for the laser color (adjust as needed)
-        # upper_red = np.array([255, 255, 255])  # Upper bound for the laser color
-        #
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+        # lower_red = np.array([180,1750, 200])  # Lower bound for the laser color (adjust as needed)
+        # upper_red = np.array([210, 190, 255])  # Upper bound for the laser color
         # mask = cv2.inRange(frame, lower_red, upper_red)  # Create a mask for laser color
-        mask = cv2.threshold(frame[:, :, 2], 200, 255, cv2.THRESH_BINARY)[1]
+        lower_hsv = np.asarray([110,20,110])
+        upper_hsv = np.asarray([180,90,230])
+        mask = cv2.inRange(frame, lower_hsv, upper_hsv)
+        # mask = cv2.threshold(frame[:, :, 2], 210, 255, cv2.THRESH_BINARY)[1]
         mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, np.ones((5, 5), np.uint8))  # Remove noise
         mask = cv2.dilate(mask, np.ones((5, 5), np.uint8))  # Expand the laser area
         if debug:
@@ -24,37 +25,37 @@ class ProcessLaser:
             cv2.resizeWindow('debug mask', 800, 600)
             cv2.imshow('debug mask', mask)
 
-            cv2.waitKey(1)
 
         return mask
 
     def detect_laser(self, frame, debug=False):
-        cXid, cYid = 0, 0
-        mask = self.mask2detect(frame, debug=False)
+        mask = self.mask2detect(frame, debug=debug)
         contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
-        # cv2.drawContours(colored, contours, -1, (255, 0, 0), 3)
         if len(contours) > 0:
+            contours = [cnt for cnt in contours if cv2.contourArea(cnt) > 50]  # Filter small contours
 
-            contours = [cnt for cnt in contours if cv2.contourArea(cnt) > 80]  # Filter small contours
-            #
-            for contour in contours:
-                # Compute moments
+            if len(contours) > 0:  # Ensure there are valid contours after filtering
+                contour = contours[0]  # Assuming you want the first contour
                 Mid = cv2.moments(contour)
 
                 # Calculate the centroid
                 cXid = int(Mid["m10"] / np.maximum(Mid["m00"], 1e-10))
                 cYid = int(Mid["m01"] / np.maximum(Mid["m00"], 1e-10))
-                print('detected point: ', cYid, ' x ', cXid)
+                print('Detected point: ', cXid, ' x ', cYid)
                 print('Size: ', cv2.contourArea(contour))
 
-        if debug and len(contours) > 0:
-            debug_img = np.ones_like(frame) * 255
-            cv2.circle(debug_img, (cXid, cYid), 5, (0, 0, 255), 3)
-            cv2.namedWindow('debug detection', cv2.WINDOW_NORMAL)
-            cv2.resizeWindow('debug detection', 800, 600)
-            cv2.imshow('debug detection', debug_img)
-        return cXid, cYid
+            if debug and len(contours) > 0:
+                debug_img = np.ones_like(frame) * 255
+                cv2.circle(debug_img, (cXid, cYid), 5, (0, 0, 255), 3)
+                cv2.namedWindow('debug detection', cv2.WINDOW_NORMAL)
+                cv2.resizeWindow('debug detection', 800, 600)
+                cv2.imshow('debug detection', debug_img)
+                # Return the detected point
+                return cXid, cYid
+
+        # Return None if no valid contours are found
+        return None
 
 
     def reset_laser_pos(self):
