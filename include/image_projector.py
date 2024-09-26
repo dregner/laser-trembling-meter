@@ -95,10 +95,10 @@ class ImageProjector:
 
         cv2.putText(canvas, '\'space\' to correct perspective', (self.monitor_resolution[0] // 3,
                     self.monitor_resolution[1] // 3), cv2.FONT_HERSHEY_SIMPLEX,
-                    fontScale=1.0, color=(0, 0, 0), thickness=2)
+                    fontScale=0.8, color=(0, 0, 0), thickness=2)
         cv2.putText(canvas, '\'r\' to reset until it works', (self.monitor_resolution[0] // 3,
                     self.monitor_resolution[1] // 3+100), cv2.FONT_HERSHEY_SIMPLEX,
-                    fontScale=1.0, color=(0, 0, 0), thickness=2)
+                    fontScale=0.8, color=(0, 0, 0), thickness=2)
         self.marked_image = canvas  # Update the marked image
 
     def create_menu_img(self, rectangle_size):
@@ -149,10 +149,10 @@ class ImageProjector:
         y0, dy = self.monitor_resolution[0] // 4, 60  # Starting y position and vertical spacing
 
         text_lines = [
-            "Welcome to the Trembling Meter!",
-            "Start",
-            "Help",
-            "Quit"
+            "Bem Vindo ao Tremometro Laser!",
+            "Inicio",
+            "Ajuda",
+            "Sair"
         ]
         # Draw text on the image
         for i, line in enumerate(text_lines):
@@ -277,7 +277,9 @@ class ImageProjector:
         # Convert the buffer to a NumPy array and then to an OpenCV image (Mat)
         img_arr = np.frombuffer(buf.getvalue(), dtype=np.uint8)
         image = cv2.imdecode(img_arr, 1)  # Convert the PNG buffer into an OpenCV image
-        cv2.putText(image, 'Return to menu', (self.monitor_resolution[0]-200, self.monitor_resolution[1]-250),
+        cv2.putText(image, 'Menu', (self.monitor_resolution[0]-200, self.monitor_resolution[1]-250),
+                    cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.6, color=(0, 0,0), thickness=1)
+        cv2.putText(image, 'Aperte \'esc\'', (self.monitor_resolution[0]-20, self.monitor_resolution[1]-200),
                     cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.6, color=(0, 0,0), thickness=1)
         # cv2.rectangle(image, (self.monitor_resolution[0] - 125, self.monitor_resolution[1] - 125),
         #               (self.monitor_resolution[0] - 25, self.monitor_resolution[1] - 25), color=(0, 0, 0), thickness=-1)

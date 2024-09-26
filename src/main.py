@@ -6,6 +6,12 @@ from include.image_projector import ImageProjector
 from include.process_laser import ProcessLaser
 from include.camera_control import CameraClass
 
+
+def mousecallback(event, x, y, flags, param):
+    if event == cv2.EVENT_LBUTTONDOWN:
+        param.append((x,y))
+        print(x,', ', y)
+
 def opencv_menu(k):
     if k == 32:  # Space key
         print('Correcting perspective')
@@ -36,7 +42,7 @@ def main(projector_output, debug=True):
     camera_process = CameraClass(
         monitor_resoltuion=(width, height),
         camera_input=0,
-        camera_resolution=(width, height),
+        camera_resolution=(1600, 1200),
         marker_size=200
     )
     laser_process = ProcessLaser(img_resolution=(height, width))
@@ -47,6 +53,8 @@ def main(projector_output, debug=True):
     if debug:
         cv2.namedWindow('Webcam Feed', cv2.WINDOW_NORMAL)
         cv2.resizeWindow('Webcam Feed', 800, 600)
+    teste = []
+    cv2.setMouseCallback(projector.window_name, mousecallback, teste)
 
     menu_screen = False
     menu_help = False
@@ -63,9 +71,10 @@ def main(projector_output, debug=True):
         frame_counter += 1
         if transform_perspective:
             frame = camera_process.correct_perspective(frame=frame)
-            point =laser_process.detect_laser(frame=frame, debug=True)
-            if point is not None:
-                click.append(point)
+            if result_test is False:
+                point =laser_process.detect_laser(frame=frame, debug=True)
+                if point is not None:
+                    click.append(point)
         cv_menu = opencv_menu(k)
 
         if cv_menu == 'perspective':
@@ -119,7 +128,6 @@ def main(projector_output, debug=True):
                         img_detected_laser = laser_process.write_detected_laser_pos(frame, test_number=test_number)
                         projector.show_image(image=img_detected_laser)
                         cv2.waitKey(2000)  # Wait 2 seconds before transitioning
-                        laser_process.reset_laser_pos()
                         test_number += 1
                         test_started = False  # Reset test state for the next test
 
@@ -134,6 +142,7 @@ def main(projector_output, debug=True):
                                 result_v=laser_process.test_2_points
                             )
                             projector.show_image(image=result_image)
+                            laser_process.reset_laser_pos()
                             start_test, menu_screen, result_test, test_number = False, False, False, 1
 
         # Save the current frame if 's' is pressed
