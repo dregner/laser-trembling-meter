@@ -105,7 +105,7 @@ def main(projector_output, debug=True):
 
                         # Update the circle position during the test
                         if test_number == 1:
-                            laser_detected = laser_prqocess.test_1_points
+                            laser_detected = laser_process.test_1_points
                         elif test_number == 2:
                             laser_detected = laser_process.test_2_points
                         else:

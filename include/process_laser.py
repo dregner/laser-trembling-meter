@@ -14,12 +14,13 @@ class ProcessLaser:
         # lower_red = np.array([180,1750, 200])  # Lower bound for the laser color (adjust as needed)
         # upper_red = np.array([210, 190, 255])  # Upper bound for the laser color
         # mask = cv2.inRange(frame, lower_red, upper_red)  # Create a mask for laser color
-        lower_hsv = np.asarray([110,20,110])
+        lower_hsv = np.asarray([150,30,110])
         upper_hsv = np.asarray([180,90,230])
         mask = cv2.inRange(frame, lower_hsv, upper_hsv)
         # mask = cv2.threshold(frame[:, :, 2], 210, 255, cv2.THRESH_BINARY)[1]
-        mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, np.ones((5, 5), np.uint8))  # Remove noise
+        mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8))  # Remove noise
         mask = cv2.dilate(mask, np.ones((5, 5), np.uint8))  # Expand the laser area
+        mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, np.ones((5, 5), np.uint8))  # Remove noise
         if debug:
             cv2.namedWindow('debug mask', cv2.WINDOW_NORMAL)
             cv2.resizeWindow('debug mask', 800, 600)
