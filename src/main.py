@@ -30,7 +30,7 @@ def opencv_menu(k):
     return None
 
 
-def main(projector_output, debug=True):
+def main(projector_output, debug=False):
     frame_counter, fps = 0, 0
     elapsed_time = 10
     test_number = 1  # Start with the first test (1: horizontal, 2: vertical)
@@ -42,7 +42,7 @@ def main(projector_output, debug=True):
     camera_process = CameraClass(
         monitor_resoltuion=(width, height),
         camera_input=0,
-        camera_resolution=(1600, 1200),
+        camera_resolution=(width, height),
         marker_size=200
     )
     laser_process = ProcessLaser(img_resolution=(height, width))
@@ -72,7 +72,7 @@ def main(projector_output, debug=True):
         if transform_perspective:
             frame = camera_process.correct_perspective(frame=frame)
             if result_test is False:
-                point =laser_process.detect_laser(frame=frame, debug=True)
+                point =laser_process.detect_laser(frame=frame, debug=False)
                 if point is not None:
                     click.append(point)
         cv_menu = opencv_menu(k)
@@ -134,7 +134,7 @@ def main(projector_output, debug=True):
                         if test_number == 2:
                             projector.show_image(image=projector.v_test_img)
                             t0 = time.time()  # Restart the timer for the vertical test
-                            result_test = True
+
                         else:
                             # Both tests are done, show results
                             result_image = projector.result_image(
@@ -143,7 +143,7 @@ def main(projector_output, debug=True):
                             )
                             projector.show_image(image=result_image)
                             laser_process.reset_laser_pos()
-                            start_test, menu_screen, result_test, test_number = False, False, False, 1
+                            start_test, menu_screen, result_test, test_number = False, False, True, 1
 
         # Save the current frame if 's' is pressed
         if cv_menu == 'save_img':
@@ -154,7 +154,7 @@ def main(projector_output, debug=True):
         # Handle help menu interaction
         if menu_help:
             if laser_process.detect_laser_help(frame, projector.help_boxes, click=click[-1]):
-                menu_screen, menu_help = True, False
+                menu_screen, menu_help  = True, False
                 projector.show_image(image=projector.menu_img)
 
         # Reset the application state
@@ -167,7 +167,7 @@ def main(projector_output, debug=True):
             laser_process.reset_laser_pos()
             projector.show_image(image=projector.menu_img)
             cv2.waitKey(1000)
-            menu_screen = True
+            menu_screen, result_test = True, False
 
         if cv_menu == 'quit':
             break
@@ -183,5 +183,5 @@ def main(projector_output, debug=True):
 
 if __name__ == "__main__":
     # projector_output_source = '\\\\.\\DISPLAY4' # Number 4 is from projector at class room
-    projector_output_source = 'DP-3'  # Number 4 is from projector at class room
+    projector_output_source = 'DP-3'  # Number 4 is from projector at optics lab room
     main(projector_output_source)

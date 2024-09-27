@@ -89,7 +89,7 @@ def on_hsv_trackbar_change(val):
 def main():
     global image
     # Load the image
-    image_path = '../images/frame1.jpg'  # Update your path here
+    image_path = '../images/frame7.jpg'  # Update your path here
     image = cv2.imread(image_path, cv2.IMREAD_COLOR)
 
     if image is None:

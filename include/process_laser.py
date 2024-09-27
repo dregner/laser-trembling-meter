@@ -14,8 +14,8 @@ class ProcessLaser:
         # lower_red = np.array([180,1750, 200])  # Lower bound for the laser color (adjust as needed)
         # upper_red = np.array([210, 190, 255])  # Upper bound for the laser color
         # mask = cv2.inRange(frame, lower_red, upper_red)  # Create a mask for laser color
-        lower_hsv = np.asarray([150,30,110])
-        upper_hsv = np.asarray([180,90,230])
+        lower_hsv = np.asarray([0,0,230])
+        upper_hsv = np.asarray([180,30,255])
         mask = cv2.inRange(frame, lower_hsv, upper_hsv)
         # mask = cv2.threshold(frame[:, :, 2], 210, 255, cv2.THRESH_BINARY)[1]
         mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8))  # Remove noise
@@ -43,8 +43,8 @@ class ProcessLaser:
                 # Calculate the centroid
                 cXid = int(Mid["m10"] / np.maximum(Mid["m00"], 1e-10))
                 cYid = int(Mid["m01"] / np.maximum(Mid["m00"], 1e-10))
-                print('Detected point: ', cXid, ' x ', cYid)
-                print('Size: ', cv2.contourArea(contour))
+                # print('Detected point: ', cXid, ' x ', cYid)
+                # print('Size: ', cv2.contourArea(contour))
 
             if debug and len(contours) > 0:
                 debug_img = np.ones_like(frame) * 255
@@ -53,7 +53,7 @@ class ProcessLaser:
                 cv2.resizeWindow('debug detection', 800, 600)
                 cv2.imshow('debug detection', debug_img)
                 # Return the detected point
-                return cXid, cYid
+            return cXid, cYid
 
         # Return None if no valid contours are found
         return None
@@ -61,6 +61,7 @@ class ProcessLaser:
 
     def reset_laser_pos(self):
         self.test_1_points = []
+        self.test_2_points = []
 
 
     def write_detected_laser_pos(self, frame, test_number):
@@ -83,22 +84,22 @@ class ProcessLaser:
         cXid, cYid = click
         if menu_squares_position[0][0][0] <= cXid <= menu_squares_position[0][1][0] \
                 and menu_squares_position[0][0][1] <= cYid <= menu_squares_position[0][1][1]:
-            print('Menu start')
+            #print('Menu start')
             return 'start'
         if menu_squares_position[1][0][0] <= cXid <= menu_squares_position[1][1][0] \
                 and menu_squares_position[1][0][1] <= cYid <= menu_squares_position[1][1][1]:
-            print('Menu help')
+            #print('Menu help')
             return 'help'
         if menu_squares_position[2][0][0] <= cXid <= menu_squares_position[2][1][0] \
                 and menu_squares_position[2][0][1] <= cYid <= menu_squares_position[2][1][1]:
-            print('Menu quit')
-            # return 'quit'
+            #print('Menu quit')
+            return 'quit'
         if debug:
             cv2.namedWindow('debug laser menu', cv2.WINDOW_NORMAL)
             cv2.resizeWindow('debug laser menu', 800, 600)
             cv2.circle(frame, (cXid, cYid), 5, (0, 255, 0), 2)
             cv2.imshow('debug laser menu', frame)
-            print(cXid, cYid)
+            #print(cXid, cYid)
             cv2.waitKey(1)
         return 'continue'
 
@@ -111,7 +112,7 @@ class ProcessLaser:
             cXid, cYid = click
         if help_box[0][0] <= cXid <= help_box[1][0] \
                 and help_box[0][1] <= cYid <= help_box[1][1]:
-            print('Help quit')
+            #print('Help quit')
             return True
         return False
 
@@ -146,13 +147,13 @@ class ProcessLaser:
         if test_number == 1:
             if laser_boxes[1][0][0] <= cXid <= laser_boxes[1][1][0] \
                     and laser_boxes[1][0][1] <= cYid <= laser_boxes[1][1][1]:
-                print('Laser End')
+                #print('Laser End')
                 return True
 
         if test_number == 2:
             if laser_boxes[3][0][0] <= cXid <= laser_boxes[3][1][0] \
                     and laser_boxes[3][0][1] <= cYid <= laser_boxes[3][1][1]:
-                print('Laser End')
+                #print('Laser End')
                 return True
 
         return False
@@ -167,7 +168,7 @@ class ProcessLaser:
 
         if boxes[0][0] <= cXid <= boxes[1][0] \
                 and boxes[0][1] <= cYid <= boxes[1][1]:
-            print('Laser End')
+            #print('Laser End')
             return True
 
         return False
