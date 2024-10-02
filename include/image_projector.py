@@ -28,9 +28,8 @@ class ImageProjector:
         self.find_screen_info()
         self.create_window2projector()
         self.create_marker_image()
-        self.homography_matrix = None
 
-        # images
+        # images'
         self.menu_img, self.menu_boxes = self.create_menu_img(rectangle_size=50)
         self.h_test_img, self.v_test_img, self.test_boxes, self.test_lines = self.create_test_img()
         self.help_img, self.help_boxes = self.create_help_img()
@@ -228,7 +227,7 @@ class ImageProjector:
         else:
             return image
 
-    def result_image(self, result_h, result_v, dpi=100):
+    def result_image(self, all_analysis_1, all_analysis_2, dpi=100):
         # Calculate the figure size in inches from the projector resolution and DPI
         width_in_inches = self.monitor_resolution[0] / dpi
         height_in_inches = self.monitor_resolution[1] / dpi
@@ -239,30 +238,39 @@ class ImageProjector:
         # Set a title for the figure
         fig.suptitle('2x2 Plots with Extra Information', fontsize=16)
 
-        # First plot: Sine wave
-        t = np.linspace(0, 2 * np.pi, 100)
-        axs[0, 0].plot(t, np.sin(t), 'r')
-        axs[0, 0].set_title('Sine Wave')
+        # First plot: Test 1
 
-        # Second plot: Cosine wave
-        axs[0, 1].plot(t, np.cos(t), 'b')
-        axs[0, 1].set_title('Cosine Wave')
+        axs[0, 0].plot(all_analysis_1['test_X'], all_analysis_1['test_Y'], 'b')
+        axs[0,0].plot(all_analysis_1['curve_mean_X'], all_analysis_1['curve_mean_Y'], 'r')
+        axs[0,0].scatter(all_analysis_1['maximums_X'], all_analysis_1['maximums_Y'], color='y')
+        axs[0,0].scatter(all_analysis_1['minimums_X'], all_analysis_1['minimums_Y'], color='y')
+        axs[0, 0].set_title('Test 1')
 
-        # Third plot: Tangent wave
-        axs[1, 0].plot(t, np.tan(t), 'g')
-        axs[1, 0].set_ylim([-10, 10])  # Limit y axis for tan
-        axs[1, 0].set_title('Tangent Wave')
+        # Second plot: Amplitude
+        axs[0, 1].plot(all_analysis_1['amplitude_X'], all_analysis_1['amplitude_Y'], 'b')
+        axs[0, 1].set_title('Test 1 Amplitude')
+
+        # Third plot: Test 2
+        axs[1, 0].plot(all_analysis_2['test_X'], all_analysis_2['test_Y'], 'b')
+        axs[1,0].plot(all_analysis_2['curve_mean_X'], all_analysis_2['curve_mean_Y'], 'r')
+        axs[1,0].scatter(all_analysis_2['maximums_X'], all_analysis_2['maximums_Y'], color='y')
+        axs[1,0].scatter(all_analysis_2['minimums_X'], all_analysis_2['minimums_Y'], color='y')
+        #axs[1, 0].set_ylim([-10, 10])  # Limit y axis for tan
+        axs[1, 0].set_title('Test 2')
 
         # Fourth plot: Exponential decay
-        axs[1, 1].plot(t, np.exp(-t), 'm')
-        axs[1, 1].set_title('Exponential Decay')
+        axs[1, 1].plot(all_analysis_2['amplitude_X'], all_analysis_2['amplitude_Y'], 'b')
+        axs[1, 1].set_title('Test 2 Amplitude')
 
         # Add extra info (annotations, text, etc.) next to the plots
         plt.figtext(0.7, 0.85, "Extra Information:", fontsize=12, ha='left', va='center', color='black')
-        plt.figtext(0.7, 0.80, "- Sine wave in red", fontsize=10, ha='left', va='center', color='red')
-        plt.figtext(0.7, 0.75, "- Cosine wave in blue", fontsize=10, ha='left', va='center', color='blue')
-        plt.figtext(0.7, 0.70, "- Tangent wave in green", fontsize=10, ha='left', va='center', color='green')
-        plt.figtext(0.7, 0.65, "- Exponential decay in magenta", fontsize=10, ha='left', va='center', color='magenta')
+        plt.figtext(0.7, 0.80, "Test 1", fontsize=12, ha='left', va='center', color='black')
+        plt.figtext(0.7, 0.75, f"Maxima Amplitude: {max(all_analysis_1['amplitude_Y']):.2f}", fontsize=10, ha='left', va='center', color='red')
+        plt.figtext(0.7, 0.70, f"Frequency: {all_analysis_1['frequency']}", fontsize=10, ha='left', va='center', color='blue')
+
+        plt.figtext(0.7, 0.45, "Test 2", fontsize=12, ha='left', va='center', color='black')
+        plt.figtext(0.7, 0.40, f"Maxima Amplitude: {max(all_analysis_2['amplitude_Y']):.2f}", fontsize=10, ha='left', va='center', color='green')
+        plt.figtext(0.7, 0.35, f"Frequency: {all_analysis_2['frequency']}", fontsize=10, ha='left', va='center', color='magenta')
 
         # Adjust layout to make room for the text
         plt.tight_layout(rect=[0, 0, 0.7, 1])  # Leave space on the right for the extra info
@@ -277,9 +285,7 @@ class ImageProjector:
         # Convert the buffer to a NumPy array and then to an OpenCV image (Mat)
         img_arr = np.frombuffer(buf.getvalue(), dtype=np.uint8)
         image = cv2.imdecode(img_arr, 1)  # Convert the PNG buffer into an OpenCV image
-        cv2.putText(image, 'Menu', (self.monitor_resolution[0]-200, self.monitor_resolution[1]-250),
-                    cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.6, color=(0, 0,0), thickness=1)
-        cv2.putText(image, 'Aperte \'esc\'', (self.monitor_resolution[0]-20, self.monitor_resolution[1]-200),
+        cv2.putText(image, 'Return to menu', (self.monitor_resolution[0]-200, self.monitor_resolution[1]-250),
                     cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.6, color=(0, 0,0), thickness=1)
         # cv2.rectangle(image, (self.monitor_resolution[0] - 125, self.monitor_resolution[1] - 125),
         #               (self.monitor_resolution[0] - 25, self.monitor_resolution[1] - 25), color=(0, 0, 0), thickness=-1)

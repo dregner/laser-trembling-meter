@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from include.image_projector import ImageProjector
 from include.process_laser import ProcessLaser
 from include.camera_control import CameraClass
-
+from include.test_analysis import TestAnalysis
 
 def mousecallback(event, x, y, flags, param):
     if event == cv2.EVENT_LBUTTONDOWN:
@@ -137,10 +137,9 @@ def main(projector_output, debug=False):
 
                         else:
                             # Both tests are done, show results
-                            result_image = projector.result_image(
-                                result_h=laser_process.test_1_points,
-                                result_v=laser_process.test_2_points
-                            )
+                            analysis_1 = TestAnalysis(laser_process.test_1_points)
+                            analysis_2 = TestAnalysis(laser_process.test_2_points)
+                            result_image = projector.result_image(analysis_1.all_analysis, analysis_2.all_analysis)
                             projector.show_image(image=result_image)
                             laser_process.reset_laser_pos()
                             start_test, menu_screen, result_test, test_number = False, False, True, 1
