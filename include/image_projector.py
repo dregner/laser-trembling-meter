@@ -250,7 +250,8 @@ class ImageProjector:
                        'g')
         axs[0, 0].scatter(all_analysis_1['maximums_X'], all_analysis_1['maximums_Y'], color='y')
         axs[0, 0].scatter(all_analysis_1['minimums_X'], all_analysis_1['minimums_Y'], color='y')
-        axs[0, 0].set_title('Test 1')
+        axs[0, 0].set_ylim(self.test_lines[0][1]-100, self.test_lines[0][1]+100)
+        axs[0, 0].set_title('Test Horizontal')
 
         # Second plot: Amplitude
         axs[0, 1].plot(all_analysis_1['amplitude_X'], all_analysis_1['amplitude_Y'], 'b')
@@ -263,8 +264,9 @@ class ImageProjector:
                        'g')
         axs[1, 0].scatter(all_analysis_2['maximums_X'], all_analysis_2['maximums_Y'], color='y')
         axs[1, 0].scatter(all_analysis_2['minimums_X'], all_analysis_2['minimums_Y'], color='y')
+        axs[1, 0].set_xlim(self.test_lines[2][0]-100, self.test_lines[2][0]+100)
         # axs[1, 0].set_ylim([-10, 10])  # Limit y axis for tan
-        axs[1, 0].set_title('Test 2')
+        axs[1, 0].set_title('Test Vertical')
 
         # Fourth plot: Exponential decay
         axs[1, 1].plot(all_analysis_2['amplitude_X'], all_analysis_2['amplitude_Y'], 'b')
@@ -279,8 +281,8 @@ class ImageProjector:
                     color='blue')
 
         plt.figtext(0.7, 0.45, "Test 2", fontsize=12, ha='left', va='center', color='black')
-        plt.figtext(0.7, 0.40, f"Maxima Amplitude: {max(all_analysis_2['amplitude_Y']):.2f}", fontsize=10, ha='left',
-                    va='center', color='green')
+        plt.figtext(0.7, 0.40, f"Maxima Amplitude: ", fontsize=10, ha='left',
+                    va='center', color='green')# {max(all_analysis_2['amplitude_Y']):.2f}
         plt.figtext(0.7, 0.35, f"Frequency: {all_analysis_2['frequency']}", fontsize=10, ha='left', va='center',
                     color='magenta')
 
