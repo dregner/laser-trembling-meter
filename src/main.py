@@ -7,10 +7,12 @@ from include.process_laser import ProcessLaser
 from include.camera_control import CameraClass
 from include.test_analysis import TestAnalysis
 
+
 def mousecallback(event, x, y, flags, param):
     if event == cv2.EVENT_LBUTTONDOWN:
-        param.append((x,y))
-        print(x,', ', y)
+        param.append((x, y))
+        print(x, ', ', y)
+
 
 def opencv_menu(k):
     if k == 32:  # Space key
@@ -30,7 +32,7 @@ def opencv_menu(k):
     return None
 
 
-def main(projector_output, debug=False):
+def main(projector_output, debug=True):
     frame_counter, fps = 0, 0
     elapsed_time = 10
     test_number = 1  # Start with the first test (1: horizontal, 2: vertical)
@@ -54,7 +56,7 @@ def main(projector_output, debug=False):
         cv2.namedWindow('Webcam Feed', cv2.WINDOW_NORMAL)
         cv2.resizeWindow('Webcam Feed', 800, 600)
     teste = []
-    cv2.setMouseCallback(projector.window_name, mousecallback, teste)
+    cv2.setMouseCallback('Webcam Feed', mousecallback, teste)
 
     menu_screen = False
     menu_help = False
@@ -72,8 +74,8 @@ def main(projector_output, debug=False):
         if transform_perspective:
             frame = camera_process.correct_perspective(frame=frame)
             if result_test is False:
-                point =laser_process.detect_laser(frame=frame, debug=False)
-                if point is not None:
+                point = laser_process.detect_laser(frame=frame, debug=False)
+                if point != (0, 0):
                     click.append(point)
         cv_menu = opencv_menu(k)
 
@@ -121,7 +123,8 @@ def main(projector_output, debug=False):
                             laser_detected = None
 
                         frame_with_circle = projector.update_circle_position(test_number=test_number, start_time=t0,
-                                                                             elapsed_time=elapsed_time, laser_pos=laser_detected)
+                                                                             elapsed_time=elapsed_time,
+                                                                             laser_pos=laser_detected)
                         projector.show_image(frame_with_circle)
                     else:
                         # Test is done, save results and transition
@@ -137,8 +140,8 @@ def main(projector_output, debug=False):
 
                         else:
                             # Both tests are done, show results
-                            analysis_1 = TestAnalysis(laser_process.test_1_points)
-                            analysis_2 = TestAnalysis(laser_process.test_2_points)
+                            analysis_1 = TestAnalysis(laser_process.test_1_points, type='H')
+                            analysis_2 = TestAnalysis(laser_process.test_2_points, type='V')
                             result_image = projector.result_image(analysis_1.all_analysis, analysis_2.all_analysis)
                             projector.show_image(image=result_image)
                             laser_process.reset_laser_pos()
@@ -153,7 +156,7 @@ def main(projector_output, debug=False):
         # Handle help menu interaction
         if menu_help:
             if laser_process.detect_laser_help(frame, projector.help_boxes, click=click[-1]):
-                menu_screen, menu_help  = True, False
+                menu_screen, menu_help = True, False
                 projector.show_image(image=projector.menu_img)
 
         # Reset the application state
@@ -182,5 +185,5 @@ def main(projector_output, debug=False):
 
 if __name__ == "__main__":
     # projector_output_source = '\\\\.\\DISPLAY4' # Number 4 is from projector at class room
-    projector_output_source = 'DP-3'  # Number 4 is from projector at optics lab room
+    projector_output_source = 'DVI-D-0'  # Number 4 is from projector at optics lab room
     main(projector_output_source)

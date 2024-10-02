@@ -38,6 +38,8 @@ def update_hsv_mask(image, lower_hsv, upper_hsv, kernel_size):
     stacked_result = np.hstack((image, hsv_mask))
 
     # Display both the original BGR image and the HSV mask
+    cv2.namedWindow('HSV Image and Mask',cv2.WINDOW_NORMAL)
+    cv2.resizeWindow('HSV Image and Mask', 1600, 1200)
     cv2.imshow('HSV Image and Mask', stacked_result)
 
 def on_bgr_trackbar_change(val):
@@ -89,7 +91,7 @@ def on_hsv_trackbar_change(val):
 def main():
     global image
     # Load the image
-    image_path = '../images/frame7.jpg'  # Update your path here
+    image_path = '../images/frame2.jpg'  # Update your path here
     image = cv2.imread(image_path, cv2.IMREAD_COLOR)
 
     if image is None:

@@ -121,22 +121,22 @@ class ImageProjector:
         for i, line in enumerate(text_lines):
             if i == 0:
                 y = y0 + i * dy
-                cv2.putText(image, line, (width // 10, y), font, fontScale=1.2, color=(255, 255, 0), thickness=2)
+                cv2.putText(image, line, (width // 10, y), font, fontScale=1.2, color=(127, 127, 0), thickness=2)
             else:
                 y = y0 + i * dy
-                cv2.putText(image, line, (width // 4, y), font, fontScale=1, color=(255, 255, 0), thickness=2)
+                cv2.putText(image, line, (width // 4, y), font, fontScale=1, color=(127, 127, 0), thickness=2)
             if i > 0:
                 cv2.rectangle(image, (width // 4 - rectangle_size // 2 + offset_box, y - rectangle_size // 2),
                               (width // 4 + rectangle_size // 2 + offset_box, y + rectangle_size // 2),
-                              color=(255, 255, 0),
+                              color=(127, 127, 0),
                               thickness=2)
                 menu_boxes.append([(width // 4 - rectangle_size // 2 + offset_box, y - rectangle_size // 2),
                                    (width // 4 + rectangle_size // 2 + offset_box, y + rectangle_size // 2)])
 
         cv2.putText(image, 'Fundamentos da Visao Computacional', (width - width // 2 - 100, height - height // 8), font,
-                    fontScale=0.6, color=(255, 255, 0), thickness=1)
+                    fontScale=0.6, color=(127, 127, 0), thickness=1)
         cv2.putText(image, 'LABMETRO - UFSC', (width - width // 4, height - height // 8 + 20), font, fontScale=0.6,
-                    color=(255, 255, 0), thickness=1)
+                    color=(127, 127, 0), thickness=1)
         return image, menu_boxes
 
     def create_help_img(self, rect_size=100):
@@ -158,8 +158,8 @@ class ImageProjector:
         # Draw text on the image
         for i, line in enumerate(text_lines):
             y = y0 + i * dy
-            cv2.putText(image, line, (width // 4, y), font, fontScale=1, color=(255, 255, 0), thickness=2)
-        cv2.rectangle(image, (width - 300, height - 300), (width - 200, height - 200), color=(255, 255, 0), thickness=2)
+            cv2.putText(image, line, (width // 4, y), font, fontScale=1, color=(127, 127, 0), thickness=2)
+        cv2.rectangle(image, (width - 300, height - 300), (width - 200, height - 200), color=(127, 127, 0), thickness=2)
         boxes = [(width - 300, height - 300), (width - 200, height - 200)]
 
         return image, boxes
@@ -180,15 +180,15 @@ class ImageProjector:
         h_img = np.ones((self.monitor_resolution[1], self.monitor_resolution[0], 3), dtype=np.uint8)
         cv2.line(h_img, (h_boxes[0][1][0], h_boxes[0][1][1] - rect_size)
                  , (h_boxes[1][0][0], h_boxes[1][1][1] - rect_size), color=(255, 0, 0), thickness=4)
-        cv2.rectangle(h_img, h_boxes[0][0], h_boxes[0][1], color=(255, 255, 0), thickness=2)
-        cv2.rectangle(h_img, h_boxes[1][0], h_boxes[1][1], color=(255, 255, 0), thickness=2)
+        cv2.rectangle(h_img, h_boxes[0][0], h_boxes[0][1], color=(127, 127, 0), thickness=2)
+        cv2.rectangle(h_img, h_boxes[1][0], h_boxes[1][1], color=(127, 127, 0), thickness=2)
         lines_h = [(h_boxes[0][1][0], h_boxes[0][1][1] - rect_size), (h_boxes[1][1][0], h_boxes[1][1][1] - rect_size)]
 
         v_img = np.ones_like(h_img, dtype=np.uint8)
         cv2.line(v_img, (v_boxes[0][0][0] + rect_size, v_boxes[0][1][1])
                  , (v_boxes[1][0][0] + rect_size, v_boxes[1][0][1]), color=(255, 0, 0), thickness=4)
-        cv2.rectangle(v_img, v_boxes[0][0], v_boxes[0][1], color=(255, 255, 0), thickness=2)
-        cv2.rectangle(v_img, v_boxes[1][0], v_boxes[1][1], color=(255, 255, 0), thickness=2)
+        cv2.rectangle(v_img, v_boxes[0][0], v_boxes[0][1], color=(127, 127, 0), thickness=2)
+        cv2.rectangle(v_img, v_boxes[1][0], v_boxes[1][1], color=(127, 127, 0), thickness=2)
         lines_v = [(v_boxes[0][0][0] + rect_size, v_boxes[0][1][1]), (v_boxes[1][0][0] + rect_size, v_boxes[1][0][1])]
 
         return h_img, v_img, np.concatenate((h_boxes, v_boxes)), np.concatenate((lines_h, lines_v))
@@ -210,7 +210,7 @@ class ImageProjector:
             int(start_point[0] + t_percentage * (end_point[0] - start_point[0])),
             int(start_point[1] + t_percentage * (end_point[1] - start_point[1]))
         )
-        image = cv2.circle(frame_with_circle, current_pos, radius=10, color=(255, 255, 0), thickness=-1)
+        image = cv2.circle(frame_with_circle, current_pos, radius=10, color=(0, 0, 255), thickness=-1)
         if laser_pos is not None:
             output_img = self.update_tracked_laser(image, laser_pos)
         else:
@@ -240,58 +240,66 @@ class ImageProjector:
         fig, axs = plt.subplots(2, 2, figsize=(width_in_inches, height_in_inches), dpi=dpi)
 
         # Set a title for the figure
-        fig.suptitle('2x2 Plots with Extra Information', fontsize=16)
+        fig.suptitle('Resultado', fontsize=16)
 
         # First plot: Test 1
+        e_max_1 = np.maximum(np.abs(np.max(all_analysis_1['test_Y'])-self.test_lines[0][1]),
+                             np.abs(np.min(all_analysis_1['test_Y']-self.test_lines[0][1])))
 
-        axs[0, 0].plot(all_analysis_1['test_X'], all_analysis_1['test_Y'], 'b')
-        axs[0, 0].plot(all_analysis_1['curve_mean_X'], all_analysis_1['curve_mean_Y'], 'r')
+        e_max_2 = np.maximum(np.abs(np.max(all_analysis_2['test_X']-self.test_lines[2][0])),
+                             np.abs(np.min(all_analysis_2['test_X'])-self.test_lines[2][0]))
+
+        axs[0, 0].plot(all_analysis_1['test_X'], all_analysis_1['test_Y'], label='Detectado', color='b')
+        axs[0, 0].plot((self.test_lines[0][0], self.test_lines[1][0]),
+                       (np.mean(all_analysis_1['test_Y']), np.mean(all_analysis_1['test_Y'])), label='Media', color='r')
         axs[0, 0].plot((self.test_lines[0][0], self.test_lines[1][0]), (self.test_lines[0][1], self.test_lines[1][1]),
-                       'g')
+                       label='Linha Teste', color='g', linestyle='--')
+        axs[0, 0].plot((self.test_lines[0][0], self.test_lines[1][0]), (self.test_lines[0][1]+e_max_1, self.test_lines[1][1]+e_max_1), color=(1, 0.65, 0), linestyle='--')
+        axs[0, 0].plot((self.test_lines[0][0], self.test_lines[1][0]), (self.test_lines[0][1]-e_max_1, self.test_lines[1][1]-e_max_1), color=(1, 0.65, 0), linestyle='--')
         axs[0, 0].scatter(all_analysis_1['maximums_X'], all_analysis_1['maximums_Y'], color='y')
         axs[0, 0].scatter(all_analysis_1['minimums_X'], all_analysis_1['minimums_Y'], color='y')
-        axs[0, 0].set_ylim(self.test_lines[0][1]-100, self.test_lines[0][1]+100)
+        axs[0, 0].set_ylim(self.test_lines[0][1] - e_max_1 - 10, self.test_lines[0][1] + e_max_1 + 10)
+        axs[0, 0].legend()
         axs[0, 0].set_title('Test Horizontal')
 
         # Second plot: Amplitude
         axs[0, 1].plot(all_analysis_1['amplitude_X'], all_analysis_1['amplitude_Y'], 'b')
-        axs[0, 1].set_title('Test 1 Amplitude')
+        axs[0, 1].set_title('Test Horizontal Amplitude')
 
         # Third plot: Test 2
-        axs[1, 0].plot(all_analysis_2['test_X'], all_analysis_2['test_Y'], 'b')
-        axs[1, 0].plot(all_analysis_2['curve_mean_X'], all_analysis_2['curve_mean_Y'], 'r')
-        axs[1, 0].plot((self.test_lines[2][0], self.test_lines[3][0]), (self.test_lines[2][1], self.test_lines[3][1]),
-                       'g')
+        axs[1, 0].plot(all_analysis_2['test_X'], all_analysis_2['test_Y'], label='Detectado', color='b')
+        axs[1, 0].plot((np.mean(all_analysis_2['test_X']), np.mean(all_analysis_2['test_X'])),
+                       (self.test_lines[2][1], self.test_lines[3][1]), label='Media', color='r')
+        axs[1, 0].plot((self.test_lines[2][0], self.test_lines[3][0]), (self.test_lines[2][1], self.test_lines[3][1]),label='Linha Teste', color='g', linestyle='--')
+        axs[1, 0].plot((self.test_lines[2][0]+e_max_2, self.test_lines[3][0]+e_max_2), (self.test_lines[2][1], self.test_lines[3][1]), color=(1, 0.65, 0), linestyle='--')
+        axs[1, 0].plot((self.test_lines[2][0]-e_max_2, self.test_lines[3][0]-e_max_2), (self.test_lines[2][1], self.test_lines[3][1]), color=(1, 0.65, 0), linestyle='--')
         axs[1, 0].scatter(all_analysis_2['maximums_X'], all_analysis_2['maximums_Y'], color='y')
         axs[1, 0].scatter(all_analysis_2['minimums_X'], all_analysis_2['minimums_Y'], color='y')
-        axs[1, 0].set_xlim(self.test_lines[2][0]-100, self.test_lines[2][0]+100)
+        axs[1, 0].set_xlim(self.test_lines[2][0] - e_max_2 -10, self.test_lines[2][0] + e_max_2 + 10)
+        axs[1, 0].legend()
         # axs[1, 0].set_ylim([-10, 10])  # Limit y axis for tan
         axs[1, 0].set_title('Test Vertical')
 
         # Fourth plot: Exponential decay
         axs[1, 1].plot(all_analysis_2['amplitude_X'], all_analysis_2['amplitude_Y'], 'b')
-        axs[1, 1].set_title('Test 2 Amplitude')
+        axs[1, 1].set_title('Test Vertical Amplitude')
 
         # Add extra info (annotations, text, etc.) next to the plots
-        plt.figtext(0.7, 0.85, "Extra Information:", fontsize=12, ha='left', va='center', color='black')
-        plt.figtext(0.7, 0.80, "Test 1", fontsize=12, ha='left', va='center', color='black')
-        plt.figtext(0.7, 0.75, f"Maxima Amplitude: {max(all_analysis_1['amplitude_Y']):.2f}", fontsize=10, ha='left',
-                    va='center', color='red')
-        plt.figtext(0.7, 0.70, f"Frequency: {all_analysis_1['frequency']}", fontsize=10, ha='left', va='center',
-                    color='blue')
+        plt.figtext(0.7, 0.80, "Test Horizontal", fontsize=15, ha='left', va='center', color='black')
+        plt.figtext(0.7, 0.75, f"Maxima Amplitude: {max(all_analysis_1['amplitude_Y']):.2f} pixels", fontsize=10, ha='left',
+                    va='center', color='black')
+        plt.figtext(0.7, 0.70, f"Resultado: ({np.mean(all_analysis_1['test_Y']):.2f} +- {2*np.std(all_analysis_1['test_Y']):.2f}) pixels", fontsize=10, ha='left', va='center',
+                    color='black')
 
-        plt.figtext(0.7, 0.45, "Test 2", fontsize=12, ha='left', va='center', color='black')
-        plt.figtext(0.7, 0.40, f"Maxima Amplitude: ", fontsize=10, ha='left',
-                    va='center', color='green')# {max(all_analysis_2['amplitude_Y']):.2f}
-        plt.figtext(0.7, 0.35, f"Frequency: {all_analysis_2['frequency']}", fontsize=10, ha='left', va='center',
-                    color='magenta')
+        plt.figtext(0.7, 0.45, "Test Vertical", fontsize=15, ha='left', va='center', color='black')
+        plt.figtext(0.7, 0.40, f"Maxima Amplitude: {max(all_analysis_2['amplitude_Y']):.2f} pixels", fontsize=10, ha='left',
+                    va='center', color='black')
+        plt.figtext(0.7, 0.35, f"Resultado: ({np.mean(all_analysis_2['test_X']):.2f} +- {2*np.std(all_analysis_2['test_X']):.2f}) pixels", fontsize=10, ha='left', va='center',
+                    color='black')
 
         # Adjust layout to make room for the text
         plt.tight_layout(rect=[0, 0, 0.7, 1])  # Leave space on the right for the extra info
 
-        # cv2.putText(image,'Trembling Result', (self.monitor_resolution[0] // 2,100),
-        #             cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=(255, 255, 255), thickness=2)
-        # Convert the figure to a NumPy array (instead of saving to a file)
         buf = BytesIO()
         plt.savefig(buf, format='png')
         buf.seek(0)
@@ -301,10 +309,7 @@ class ImageProjector:
         image = cv2.imdecode(img_arr, 1)  # Convert the PNG buffer into an OpenCV image
         cv2.putText(image, 'Return to menu', (self.monitor_resolution[0] - 200, self.monitor_resolution[1] - 250),
                     cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.6, color=(0, 0, 0), thickness=1)
-        # cv2.rectangle(image, (self.monitor_resolution[0] - 125, self.monitor_resolution[1] - 125),
-        #               (self.monitor_resolution[0] - 25, self.monitor_resolution[1] - 25), color=(0, 0, 0), thickness=-1)
-        #
-        # self.result_box = [(self.monitor_resolution[0] - 100, self.monitor_resolution[1] - 100),
-        #                    (self.monitor_resolution[0] - 50, self.monitor_resolution[1] - 50)]
+        cv2.putText(image, 'Press \'esc\'', (self.monitor_resolution[0] - 200, self.monitor_resolution[1] - 200),
+                    cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.6, color=(0, 0, 0), thickness=1)
 
         return image
