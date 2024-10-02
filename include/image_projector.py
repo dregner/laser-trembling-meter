@@ -36,7 +36,6 @@ class ImageProjector:
         # print('Projector Initiate')
         self.result_box = []
         print('Menu boxes', self.menu_boxes)
-        print('Help boxes', self.help_boxes)
 
     def get_screen_info(self):
         """ Get screen resolution Returns: monitor resolution """
@@ -75,7 +74,7 @@ class ImageProjector:
     def create_marker_image(self):
         """ Create an image with multiple ArUco markers arranged on a canvas. """
         canvas = np.ones((self.monitor_resolution[1], self.monitor_resolution[0]),
-                         dtype=np.uint8) * 255 # Create a white image
+                         dtype=np.uint8) * 255  # Create a white image
         markers = [self.generate_aruco_marker(marker_id) for marker_id in self.marker_ids]  # Generate all markers
 
         # Predefined positions to place markers on the canvas
@@ -93,10 +92,12 @@ class ImageProjector:
             canvas[y:y + self.marker_size, x:x + self.marker_size] = marker
 
         cv2.putText(canvas, '\'space\' to correct perspective', (self.monitor_resolution[0] // 3,
-                    self.monitor_resolution[1] // 3), cv2.FONT_HERSHEY_SIMPLEX,
+                                                                 self.monitor_resolution[1] // 3),
+                    cv2.FONT_HERSHEY_SIMPLEX,
                     fontScale=0.8, color=(0, 0, 0), thickness=2)
         cv2.putText(canvas, '\'r\' to reset until it works', (self.monitor_resolution[0] // 3,
-                    self.monitor_resolution[1] // 3+100), cv2.FONT_HERSHEY_SIMPLEX,
+                                                              self.monitor_resolution[1] // 3 + 100),
+                    cv2.FONT_HERSHEY_SIMPLEX,
                     fontScale=0.8, color=(0, 0, 0), thickness=2)
         self.marked_image = canvas  # Update the marked image
 
@@ -126,7 +127,8 @@ class ImageProjector:
                 cv2.putText(image, line, (width // 4, y), font, fontScale=1, color=(255, 255, 0), thickness=2)
             if i > 0:
                 cv2.rectangle(image, (width // 4 - rectangle_size // 2 + offset_box, y - rectangle_size // 2),
-                              (width // 4 + rectangle_size // 2 + offset_box, y + rectangle_size // 2), color=(255, 255, 0),
+                              (width // 4 + rectangle_size // 2 + offset_box, y + rectangle_size // 2),
+                              color=(255, 255, 0),
                               thickness=2)
                 menu_boxes.append([(width // 4 - rectangle_size // 2 + offset_box, y - rectangle_size // 2),
                                    (width // 4 + rectangle_size // 2 + offset_box, y + rectangle_size // 2)])
@@ -164,14 +166,16 @@ class ImageProjector:
 
     def create_test_img(self, rect_size=25):
         # top-left and bottom-right points for horizontal boxesl
-        h_boxes = [[(100, self.monitor_resolution[1] // 2 - rect_size), (150, self.monitor_resolution[1] // 2 + rect_size)],
-                   [(self.monitor_resolution[0] - 125 - rect_size, self.monitor_resolution[1] // 2 - rect_size),
-                    (self.monitor_resolution[0] - 75 - rect_size, self.monitor_resolution[1] // 2 + rect_size)]]
+        h_boxes = [
+            [(100, self.monitor_resolution[1] // 2 - rect_size), (150, self.monitor_resolution[1] // 2 + rect_size)],
+            [(self.monitor_resolution[0] - 125 - rect_size, self.monitor_resolution[1] // 2 - rect_size),
+             (self.monitor_resolution[0] - 75 - rect_size, self.monitor_resolution[1] // 2 + rect_size)]]
 
         # top-left and bottom-right points for vertical boxes
-        v_boxes = [[(self.monitor_resolution[0] // 2 - rect_size, 50), (self.monitor_resolution[0] // 2 + rect_size, 100)],
-                   [(self.monitor_resolution[0] // 2 - rect_size, self.monitor_resolution[1] - 75 - rect_size),
-                    (self.monitor_resolution[0] // 2 + rect_size, self.monitor_resolution[1] - 25 - rect_size)]]
+        v_boxes = [
+            [(self.monitor_resolution[0] // 2 - rect_size, 50), (self.monitor_resolution[0] // 2 + rect_size, 100)],
+            [(self.monitor_resolution[0] // 2 - rect_size, self.monitor_resolution[1] - 75 - rect_size),
+             (self.monitor_resolution[0] // 2 + rect_size, self.monitor_resolution[1] - 25 - rect_size)]]
 
         h_img = np.ones((self.monitor_resolution[1], self.monitor_resolution[0], 3), dtype=np.uint8)
         cv2.line(h_img, (h_boxes[0][1][0], h_boxes[0][1][1] - rect_size)
@@ -241,9 +245,11 @@ class ImageProjector:
         # First plot: Test 1
 
         axs[0, 0].plot(all_analysis_1['test_X'], all_analysis_1['test_Y'], 'b')
-        axs[0,0].plot(all_analysis_1['curve_mean_X'], all_analysis_1['curve_mean_Y'], 'r')
-        axs[0,0].scatter(all_analysis_1['maximums_X'], all_analysis_1['maximums_Y'], color='y')
-        axs[0,0].scatter(all_analysis_1['minimums_X'], all_analysis_1['minimums_Y'], color='y')
+        axs[0, 0].plot(all_analysis_1['curve_mean_X'], all_analysis_1['curve_mean_Y'], 'r')
+        axs[0, 0].plot((self.test_lines[0][0], self.test_lines[1][0]), (self.test_lines[0][1], self.test_lines[1][1]),
+                       'g')
+        axs[0, 0].scatter(all_analysis_1['maximums_X'], all_analysis_1['maximums_Y'], color='y')
+        axs[0, 0].scatter(all_analysis_1['minimums_X'], all_analysis_1['minimums_Y'], color='y')
         axs[0, 0].set_title('Test 1')
 
         # Second plot: Amplitude
@@ -252,10 +258,12 @@ class ImageProjector:
 
         # Third plot: Test 2
         axs[1, 0].plot(all_analysis_2['test_X'], all_analysis_2['test_Y'], 'b')
-        axs[1,0].plot(all_analysis_2['curve_mean_X'], all_analysis_2['curve_mean_Y'], 'r')
-        axs[1,0].scatter(all_analysis_2['maximums_X'], all_analysis_2['maximums_Y'], color='y')
-        axs[1,0].scatter(all_analysis_2['minimums_X'], all_analysis_2['minimums_Y'], color='y')
-        #axs[1, 0].set_ylim([-10, 10])  # Limit y axis for tan
+        axs[1, 0].plot(all_analysis_2['curve_mean_X'], all_analysis_2['curve_mean_Y'], 'r')
+        axs[1, 0].plot((self.test_lines[2][0], self.test_lines[3][0]), (self.test_lines[2][1], self.test_lines[3][1]),
+                       'g')
+        axs[1, 0].scatter(all_analysis_2['maximums_X'], all_analysis_2['maximums_Y'], color='y')
+        axs[1, 0].scatter(all_analysis_2['minimums_X'], all_analysis_2['minimums_Y'], color='y')
+        # axs[1, 0].set_ylim([-10, 10])  # Limit y axis for tan
         axs[1, 0].set_title('Test 2')
 
         # Fourth plot: Exponential decay
@@ -265,12 +273,16 @@ class ImageProjector:
         # Add extra info (annotations, text, etc.) next to the plots
         plt.figtext(0.7, 0.85, "Extra Information:", fontsize=12, ha='left', va='center', color='black')
         plt.figtext(0.7, 0.80, "Test 1", fontsize=12, ha='left', va='center', color='black')
-        plt.figtext(0.7, 0.75, f"Maxima Amplitude: {max(all_analysis_1['amplitude_Y']):.2f}", fontsize=10, ha='left', va='center', color='red')
-        plt.figtext(0.7, 0.70, f"Frequency: {all_analysis_1['frequency']}", fontsize=10, ha='left', va='center', color='blue')
+        plt.figtext(0.7, 0.75, f"Maxima Amplitude: {max(all_analysis_1['amplitude_Y']):.2f}", fontsize=10, ha='left',
+                    va='center', color='red')
+        plt.figtext(0.7, 0.70, f"Frequency: {all_analysis_1['frequency']}", fontsize=10, ha='left', va='center',
+                    color='blue')
 
         plt.figtext(0.7, 0.45, "Test 2", fontsize=12, ha='left', va='center', color='black')
-        plt.figtext(0.7, 0.40, f"Maxima Amplitude: {max(all_analysis_2['amplitude_Y']):.2f}", fontsize=10, ha='left', va='center', color='green')
-        plt.figtext(0.7, 0.35, f"Frequency: {all_analysis_2['frequency']}", fontsize=10, ha='left', va='center', color='magenta')
+        plt.figtext(0.7, 0.40, f"Maxima Amplitude: {max(all_analysis_2['amplitude_Y']):.2f}", fontsize=10, ha='left',
+                    va='center', color='green')
+        plt.figtext(0.7, 0.35, f"Frequency: {all_analysis_2['frequency']}", fontsize=10, ha='left', va='center',
+                    color='magenta')
 
         # Adjust layout to make room for the text
         plt.tight_layout(rect=[0, 0, 0.7, 1])  # Leave space on the right for the extra info
@@ -285,8 +297,8 @@ class ImageProjector:
         # Convert the buffer to a NumPy array and then to an OpenCV image (Mat)
         img_arr = np.frombuffer(buf.getvalue(), dtype=np.uint8)
         image = cv2.imdecode(img_arr, 1)  # Convert the PNG buffer into an OpenCV image
-        cv2.putText(image, 'Return to menu', (self.monitor_resolution[0]-200, self.monitor_resolution[1]-250),
-                    cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.6, color=(0, 0,0), thickness=1)
+        cv2.putText(image, 'Return to menu', (self.monitor_resolution[0] - 200, self.monitor_resolution[1] - 250),
+                    cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.6, color=(0, 0, 0), thickness=1)
         # cv2.rectangle(image, (self.monitor_resolution[0] - 125, self.monitor_resolution[1] - 125),
         #               (self.monitor_resolution[0] - 25, self.monitor_resolution[1] - 25), color=(0, 0, 0), thickness=-1)
         #
@@ -294,4 +306,3 @@ class ImageProjector:
         #                    (self.monitor_resolution[0] - 50, self.monitor_resolution[1] - 50)]
 
         return image
-
