@@ -43,7 +43,7 @@ def main(projector_output, debug=True):
     width, height = projector.get_screen_info()
     camera_process = CameraClass(
         monitor_resoltuion=(width, height),
-        camera_input=0,
+        camera_input=1,
         camera_resolution=(width, height),
         marker_size=200
     )
@@ -74,7 +74,7 @@ def main(projector_output, debug=True):
         if transform_perspective:
             frame = camera_process.correct_perspective(frame=frame)
             if result_test is False:
-                point = laser_process.detect_laser(frame=frame, debug=False)
+                point = laser_process.detect_laser(frame=frame, debug=True)
                 if point != (0, 0):
                     click.append(point)
         cv_menu = opencv_menu(k)
@@ -184,6 +184,6 @@ def main(projector_output, debug=True):
 
 
 if __name__ == "__main__":
-    # projector_output_source = '\\\\.\\DISPLAY4' # Number 4 is from projector at class room
-    projector_output_source = 'DVI-D-0'  # Number 4 is from projector at optics lab room
+    projector_output_source = '\\\\.\\DISPLAY4' # Number 4 is from projector at class room
+    # projector_output_source = 'DVI-D-0'  # Number 4 is from projector at optics lab room
     main(projector_output_source)

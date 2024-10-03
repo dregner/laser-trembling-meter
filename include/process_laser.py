@@ -11,10 +11,10 @@ class ProcessLaser:
     def mask2detect(self, frame, debug=False):
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
         # mask = cv2.inRange(frame, lower_red, upper_red)  # Create a mask for laser color
-        # lower_hsv = np.asarray([0,0,230]) # normal
-        # upper_hsv = np.asarray([180,30,255])
-        lower_hsv = np.asarray([100, 0, 230])
-        upper_hsv = np.asarray([180, 30, 255])
+        lower_hsv = np.asarray([0,0,230]) # normal
+        upper_hsv = np.asarray([180,30,255])
+        # lower_hsv = np.asarray([100, 0, 230])
+        # upper_hsv = np.asarray([180, 30, 255])
         mask = cv2.inRange(frame, lower_hsv, upper_hsv)
         # mask = cv2.threshold(frame[:, :, 2], 210, 255, cv2.THRESH_BINARY)[1]
         mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, np.ones((7, 7), np.uint8))  # Remove noise

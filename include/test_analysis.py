@@ -128,6 +128,7 @@ class TestAnalysis:
 
 
 
+
 '''
 def gerarPontos(a, b, c, d):
         X = np.linspace(0, 100, 100)  # 100 pontos entre 0 e 10

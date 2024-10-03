@@ -150,10 +150,11 @@ class ImageProjector:
         y0, dy = self.monitor_resolution[0] // 4, 60  # Starting y position and vertical spacing
 
         text_lines = [
-            "Bem Vindo ao Tremometro Laser!",
-            "Inicio",
-            "Ajuda",
-            "Sair"
+            "Teste dividido em dois experimentos",
+            "1 - Seguir linha horizontal"
+            "2 - Seguir linha vertical",
+            "Para realizar deve-se posicionar o laser no retangulo verde por 3 segundos",
+            "Apos deve-se seguir o marcador caminhando sobre a linha de referencia"
         ]
         # Draw text on the image
         for i, line in enumerate(text_lines):
@@ -180,14 +181,14 @@ class ImageProjector:
         h_img = np.ones((self.monitor_resolution[1], self.monitor_resolution[0], 3), dtype=np.uint8)
         cv2.line(h_img, (h_boxes[0][1][0], h_boxes[0][1][1] - rect_size)
                  , (h_boxes[1][0][0], h_boxes[1][1][1] - rect_size), color=(255, 0, 0), thickness=4)
-        cv2.rectangle(h_img, h_boxes[0][0], h_boxes[0][1], color=(127, 127, 0), thickness=2)
+        cv2.rectangle(h_img, h_boxes[0][0], h_boxes[0][1], color=(0, 255, 0), thickness=2)
         cv2.rectangle(h_img, h_boxes[1][0], h_boxes[1][1], color=(127, 127, 0), thickness=2)
         lines_h = [(h_boxes[0][1][0], h_boxes[0][1][1] - rect_size), (h_boxes[1][1][0], h_boxes[1][1][1] - rect_size)]
 
         v_img = np.ones_like(h_img, dtype=np.uint8)
         cv2.line(v_img, (v_boxes[0][0][0] + rect_size, v_boxes[0][1][1])
                  , (v_boxes[1][0][0] + rect_size, v_boxes[1][0][1]), color=(255, 0, 0), thickness=4)
-        cv2.rectangle(v_img, v_boxes[0][0], v_boxes[0][1], color=(127, 127, 0), thickness=2)
+        cv2.rectangle(v_img, v_boxes[0][0], v_boxes[0][1], color=(0, 255, 0), thickness=2)
         cv2.rectangle(v_img, v_boxes[1][0], v_boxes[1][1], color=(127, 127, 0), thickness=2)
         lines_v = [(v_boxes[0][0][0] + rect_size, v_boxes[0][1][1]), (v_boxes[1][0][0] + rect_size, v_boxes[1][0][1])]
 
@@ -249,12 +250,23 @@ class ImageProjector:
         e_max_2 = np.maximum(np.abs(np.max(all_analysis_2['test_X']-self.test_lines[2][0])),
                              np.abs(np.min(all_analysis_2['test_X'])-self.test_lines[2][0]))
 
+        mean_e = np.sqrt(np.sum((self.test_lines[0][0]-np.mean(all_analysis_1['test_X']))**2,
+                         (self.test_lines[2][1]-np.mean(all_analysis_1['test_Y']))**2))
+        if mean_e < 0.1:
+            result = 'Regular'
+        if 0.1 <= mean_e < 0.4:
+            result = 'Medio'
+        if 0.4 <= mean_e < 0.6:
+            result = 'Agressivo'
+        if mean_e >= 0.6:
+            result = 'Procurar médico'
+
         axs[0, 0].plot(all_analysis_1['test_X'], all_analysis_1['test_Y'], label='Detectado', color='b')
         axs[0, 0].plot((self.test_lines[0][0], self.test_lines[1][0]),
                        (np.mean(all_analysis_1['test_Y']), np.mean(all_analysis_1['test_Y'])), label='Media', color='r')
         axs[0, 0].plot((self.test_lines[0][0], self.test_lines[1][0]), (self.test_lines[0][1], self.test_lines[1][1]),
                        label='Linha Teste', color='g', linestyle='--')
-        axs[0, 0].plot((self.test_lines[0][0], self.test_lines[1][0]), (self.test_lines[0][1]+e_max_1, self.test_lines[1][1]+e_max_1), color=(1, 0.65, 0), linestyle='--')
+        axs[0, 0].plot((self.test_lines[0][0], self.test_lines[1][0]), (self.test_lines[0][1]+e_max_1, self.test_lines[1][1]+e_max_1),label='Emax', color=(1, 0.65, 0), linestyle='--')
         axs[0, 0].plot((self.test_lines[0][0], self.test_lines[1][0]), (self.test_lines[0][1]-e_max_1, self.test_lines[1][1]-e_max_1), color=(1, 0.65, 0), linestyle='--')
         axs[0, 0].scatter(all_analysis_1['maximums_X'], all_analysis_1['maximums_Y'], color='y')
         axs[0, 0].scatter(all_analysis_1['minimums_X'], all_analysis_1['minimums_Y'], color='y')
@@ -271,7 +283,7 @@ class ImageProjector:
         axs[1, 0].plot((np.mean(all_analysis_2['test_X']), np.mean(all_analysis_2['test_X'])),
                        (self.test_lines[2][1], self.test_lines[3][1]), label='Media', color='r')
         axs[1, 0].plot((self.test_lines[2][0], self.test_lines[3][0]), (self.test_lines[2][1], self.test_lines[3][1]),label='Linha Teste', color='g', linestyle='--')
-        axs[1, 0].plot((self.test_lines[2][0]+e_max_2, self.test_lines[3][0]+e_max_2), (self.test_lines[2][1], self.test_lines[3][1]), color=(1, 0.65, 0), linestyle='--')
+        axs[1, 0].plot((self.test_lines[2][0]+e_max_2, self.test_lines[3][0]+e_max_2), (self.test_lines[2][1], self.test_lines[3][1]), label='Emax', color=(1, 0.65, 0), linestyle='--')
         axs[1, 0].plot((self.test_lines[2][0]-e_max_2, self.test_lines[3][0]-e_max_2), (self.test_lines[2][1], self.test_lines[3][1]), color=(1, 0.65, 0), linestyle='--')
         axs[1, 0].scatter(all_analysis_2['maximums_X'], all_analysis_2['maximums_Y'], color='y')
         axs[1, 0].scatter(all_analysis_2['minimums_X'], all_analysis_2['minimums_Y'], color='y')
@@ -288,14 +300,17 @@ class ImageProjector:
         plt.figtext(0.7, 0.80, "Test Horizontal", fontsize=15, ha='left', va='center', color='black')
         plt.figtext(0.7, 0.75, f"Maxima Amplitude: {max(all_analysis_1['amplitude_Y']):.2f} pixels", fontsize=10, ha='left',
                     va='center', color='black')
-        plt.figtext(0.7, 0.70, f"Resultado: ({np.mean(all_analysis_1['test_Y']):.2f} +- {2*np.std(all_analysis_1['test_Y']):.2f}) pixels", fontsize=10, ha='left', va='center',
+        plt.figtext(0.7, 0.70, f"Resultado H: ({np.mean(all_analysis_1['test_Y']):.2f} +- {2*np.std(all_analysis_1['test_Y']):.2f}) pixels", fontsize=10, ha='left', va='center',
                     color='black')
 
         plt.figtext(0.7, 0.45, "Test Vertical", fontsize=15, ha='left', va='center', color='black')
         plt.figtext(0.7, 0.40, f"Maxima Amplitude: {max(all_analysis_2['amplitude_Y']):.2f} pixels", fontsize=10, ha='left',
                     va='center', color='black')
-        plt.figtext(0.7, 0.35, f"Resultado: ({np.mean(all_analysis_2['test_X']):.2f} +- {2*np.std(all_analysis_2['test_X']):.2f}) pixels", fontsize=10, ha='left', va='center',
+        plt.figtext(0.7, 0.35, f"Resultado V: ({np.mean(all_analysis_2['test_X']):.2f} +- {2*np.std(all_analysis_2['test_X']):.2f}) pixels", fontsize=10, ha='left', va='center',
                     color='black')
+
+        plt.figtext(0.7, 0.1, f'Resultado: {mean_e:2f}', fontsize=20, ha='left', va='center', color='black')
+        plt.figtext(0.7, 0.0, f'Resultado: {result:2f}', fontsize=20, ha='left', va='center', color='black')
 
         # Adjust layout to make room for the text
         plt.tight_layout(rect=[0, 0, 0.7, 1])  # Leave space on the right for the extra info
