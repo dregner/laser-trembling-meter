@@ -12,7 +12,7 @@ class ProcessLaser:
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
         # mask = cv2.inRange(frame, lower_red, upper_red)  # Create a mask for laser color
         lower_hsv = np.asarray([0,0,230]) # normal
-        upper_hsv = np.asarray([180,30,255])
+        upper_hsv = np.asarray([90,25,255])
         # lower_hsv = np.asarray([100, 0, 230])
         # upper_hsv = np.asarray([180, 30, 255])
         mask = cv2.inRange(frame, lower_hsv, upper_hsv)

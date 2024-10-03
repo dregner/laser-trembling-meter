@@ -147,21 +147,23 @@ class ImageProjector:
         font = cv2.FONT_HERSHEY_SIMPLEX
 
         # Define text position
-        y0, dy = self.monitor_resolution[0] // 4, 60  # Starting y position and vertical spacing
+        y0, dy = self.monitor_resolution[0] // 4, 40  # Starting y position and vertical spacing
 
         text_lines = [
             "Teste dividido em dois experimentos",
-            "1 - Seguir linha horizontal"
+            "1 - Seguir linha horizontal",
             "2 - Seguir linha vertical",
-            "Para realizar deve-se posicionar o laser no retangulo verde por 3 segundos",
-            "Apos deve-se seguir o marcador caminhando sobre a linha de referencia"
+            "Para realizar deve-se posicionar o laser ",
+            "no retangulo azul por 3 segundos",
+            "Apos tempo deve-se seguir o marcador ",
+            "caminhando sobre a linha de referencia"
         ]
         # Draw text on the image
         for i, line in enumerate(text_lines):
             y = y0 + i * dy
-            cv2.putText(image, line, (width // 4, y), font, fontScale=1, color=(127, 127, 0), thickness=2)
-        cv2.rectangle(image, (width - 300, height - 300), (width - 200, height - 200), color=(127, 127, 0), thickness=2)
-        boxes = [(width - 300, height - 300), (width - 200, height - 200)]
+            cv2.putText(image, line, (100, y), font, fontScale=0.8, color=(127, 127, 0), thickness=2)
+        cv2.rectangle(image, (width - 300, height - 200), (width - 200, height - 100), color=(127, 127, 0), thickness=2)
+        boxes = [(width - 300, height - 200), (width - 200, height - 100)]
 
         return image, boxes
 
@@ -181,15 +183,15 @@ class ImageProjector:
         h_img = np.ones((self.monitor_resolution[1], self.monitor_resolution[0], 3), dtype=np.uint8)
         cv2.line(h_img, (h_boxes[0][1][0], h_boxes[0][1][1] - rect_size)
                  , (h_boxes[1][0][0], h_boxes[1][1][1] - rect_size), color=(255, 0, 0), thickness=4)
-        cv2.rectangle(h_img, h_boxes[0][0], h_boxes[0][1], color=(0, 255, 0), thickness=2)
-        cv2.rectangle(h_img, h_boxes[1][0], h_boxes[1][1], color=(127, 127, 0), thickness=2)
+        cv2.rectangle(h_img, h_boxes[0][0], h_boxes[0][1], color=(127, 127, 0), thickness=2)
+        cv2.rectangle(h_img, h_boxes[1][0], h_boxes[1][1], color=(0, 0, 127), thickness=2)
         lines_h = [(h_boxes[0][1][0], h_boxes[0][1][1] - rect_size), (h_boxes[1][1][0], h_boxes[1][1][1] - rect_size)]
 
         v_img = np.ones_like(h_img, dtype=np.uint8)
         cv2.line(v_img, (v_boxes[0][0][0] + rect_size, v_boxes[0][1][1])
                  , (v_boxes[1][0][0] + rect_size, v_boxes[1][0][1]), color=(255, 0, 0), thickness=4)
-        cv2.rectangle(v_img, v_boxes[0][0], v_boxes[0][1], color=(0, 255, 0), thickness=2)
-        cv2.rectangle(v_img, v_boxes[1][0], v_boxes[1][1], color=(127, 127, 0), thickness=2)
+        cv2.rectangle(v_img, v_boxes[0][0], v_boxes[0][1], color=(127, 127, 0), thickness=2)
+        cv2.rectangle(v_img, v_boxes[1][0], v_boxes[1][1], color=(0, 0, 127), thickness=2)
         lines_v = [(v_boxes[0][0][0] + rect_size, v_boxes[0][1][1]), (v_boxes[1][0][0] + rect_size, v_boxes[1][0][1])]
 
         return h_img, v_img, np.concatenate((h_boxes, v_boxes)), np.concatenate((lines_h, lines_v))
@@ -250,15 +252,16 @@ class ImageProjector:
         e_max_2 = np.maximum(np.abs(np.max(all_analysis_2['test_X']-self.test_lines[2][0])),
                              np.abs(np.min(all_analysis_2['test_X'])-self.test_lines[2][0]))
 
-        mean_e = np.sqrt(np.sum((self.test_lines[0][0]-np.mean(all_analysis_1['test_X']))**2,
-                         (self.test_lines[2][1]-np.mean(all_analysis_1['test_Y']))**2))
-        if mean_e < 0.1:
+        mean_e = np.sqrt((self.test_lines[0][1]-np.mean(all_analysis_1['test_Y']))**2+
+                         (self.test_lines[2][0]-np.mean(all_analysis_2['test_X']))**2)
+        std_mean_e = 2*np.sqrt(np.std(all_analysis_2['test_X'])**2+np.std(all_analysis_1['test_Y'])**2)
+        if mean_e < 10:
             result = 'Regular'
-        if 0.1 <= mean_e < 0.4:
+        if 10 <= mean_e < 30:
             result = 'Medio'
-        if 0.4 <= mean_e < 0.6:
+        if 30 <= mean_e <60:
             result = 'Agressivo'
-        if mean_e >= 0.6:
+        if mean_e >= 60:
             result = 'Procurar médico'
 
         axs[0, 0].plot(all_analysis_1['test_X'], all_analysis_1['test_Y'], label='Detectado', color='b')
@@ -297,20 +300,22 @@ class ImageProjector:
         axs[1, 1].set_title('Test Vertical Amplitude')
 
         # Add extra info (annotations, text, etc.) next to the plots
-        plt.figtext(0.7, 0.80, "Test Horizontal", fontsize=15, ha='left', va='center', color='black')
+        plt.figtext(0.7, 0.80, "Teste Horizontal", fontsize=15, ha='left', va='center', color='black')
         plt.figtext(0.7, 0.75, f"Maxima Amplitude: {max(all_analysis_1['amplitude_Y']):.2f} pixels", fontsize=10, ha='left',
                     va='center', color='black')
-        plt.figtext(0.7, 0.70, f"Resultado H: ({np.mean(all_analysis_1['test_Y']):.2f} +- {2*np.std(all_analysis_1['test_Y']):.2f}) pixels", fontsize=10, ha='left', va='center',
+        plt.figtext(0.7, 0.70, f"Resultado: ({np.mean(all_analysis_1['test_Y']):.2f} +- {2*np.std(all_analysis_1['test_Y']):.2f}) pixels", fontsize=10, ha='left', va='center',
                     color='black')
+        plt.figtext(0.7, 0.65, f"Erro max: {e_max_1:.2f} pixels", fontsize=10, ha='left', va='center',                    color='black')
 
-        plt.figtext(0.7, 0.45, "Test Vertical", fontsize=15, ha='left', va='center', color='black')
-        plt.figtext(0.7, 0.40, f"Maxima Amplitude: {max(all_analysis_2['amplitude_Y']):.2f} pixels", fontsize=10, ha='left',
+        plt.figtext(0.7, 0.60, "Teste Vertical", fontsize=15, ha='left', va='center', color='black')
+        plt.figtext(0.7, 0.55, f"Maxima Amplitude: {max(all_analysis_2['amplitude_Y']):.2f} pixels", fontsize=10, ha='left',
                     va='center', color='black')
-        plt.figtext(0.7, 0.35, f"Resultado V: ({np.mean(all_analysis_2['test_X']):.2f} +- {2*np.std(all_analysis_2['test_X']):.2f}) pixels", fontsize=10, ha='left', va='center',
+        plt.figtext(0.7, 0.50, f"Resultado: ({np.mean(all_analysis_2['test_X']):.2f} +- {2*np.std(all_analysis_2['test_X']):.2f}) pixels", fontsize=10, ha='left', va='center',
                     color='black')
+        plt.figtext(0.7, 0.45, f"Erro max: {e_max_2:.2f} pixels", fontsize=10, ha='left', va='center',                    color='black')
 
-        plt.figtext(0.7, 0.1, f'Resultado: {mean_e:2f}', fontsize=20, ha='left', va='center', color='black')
-        plt.figtext(0.7, 0.0, f'Resultado: {result:2f}', fontsize=20, ha='left', va='center', color='black')
+        plt.figtext(0.7, 0.30, f'Erro medio: ({mean_e:.2f}+- {std_mean_e :.2f}) pixels', fontsize=12, ha='left', va='center', color='black')
+        plt.figtext(0.7, 0.25, result, fontsize=15, ha='left', va='center', color='black')
 
         # Adjust layout to make room for the text
         plt.tight_layout(rect=[0, 0, 0.7, 1])  # Leave space on the right for the extra info
@@ -322,9 +327,9 @@ class ImageProjector:
         # Convert the buffer to a NumPy array and then to an OpenCV image (Mat)
         img_arr = np.frombuffer(buf.getvalue(), dtype=np.uint8)
         image = cv2.imdecode(img_arr, 1)  # Convert the PNG buffer into an OpenCV image
-        cv2.putText(image, 'Return to menu', (self.monitor_resolution[0] - 200, self.monitor_resolution[1] - 250),
+        cv2.putText(image, 'Return to menu', (self.monitor_resolution[0] - 200, self.monitor_resolution[1] - 100),
                     cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.6, color=(0, 0, 0), thickness=1)
-        cv2.putText(image, 'Press \'esc\'', (self.monitor_resolution[0] - 200, self.monitor_resolution[1] - 200),
+        cv2.putText(image, 'Press \'esc\'', (self.monitor_resolution[0] - 200, self.monitor_resolution[1] - 50),
                     cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.6, color=(0, 0, 0), thickness=1)
 
         return image
